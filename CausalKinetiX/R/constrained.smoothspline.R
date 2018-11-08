@@ -36,7 +36,7 @@
 ##' 
 ##' @export
 ##'
-##' @import fda
+##' @import fda, cvTools, quadprog
 ##'
 ##' @author Niklas Pfister, Stefan Bauer and Jonas Peters
 ##'
