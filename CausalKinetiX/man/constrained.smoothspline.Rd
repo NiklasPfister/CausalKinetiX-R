@@ -17,6 +17,15 @@ length as y.}
 \item{pen.degree}{desired degree of the derivative in smoothing
 penalty.}
 
+\item{constraint}{one of 'none', 'fixed' or 'bounded' depending on
+whether the derivatives should not be constrained, fixed to a
+constant or bounded in an interval, respectively.}
+
+\item{derivative.values}{either a vector with the same length as y
+if contraint=='fixed' or a matrix with 2 columns conatining the
+lower and upper bounds on the derivatives if
+contraint=='bounded'.}
+
 \item{initial.value}{optional paramter that specifies an initial
 value of the spline incase it should be fixed.}
 
@@ -30,15 +39,6 @@ cross-validation in determining the penalty parameter.}
 \item{lambda}{either a numeric value if the penalty parameter is
 fixed explicitely or one of the values 'optim' or 'grid.search'
 depending on the desired optimization procedure.}
-
-\item{contraint}{one of 'none', 'fixed' or 'bounded' depending on
-whether the derivatives should not be constrained, fixed to a
-constant or bounded in an interval, respectively.}
-
-\item{derivative.value}{either a vector with the same length as y
-if contraint=='fixed' or a matrix with 2 columns conatining the
-lower and upper bounds on the derivatives if
-contraint=='bounded'.}
 }
 \value{
 a list consisting of the following
@@ -70,7 +70,7 @@ fit <- constrained.smoothspline(y=y,
                                 times=x,
                                 pen.degree=2,
                                 constraint="none",
-                                derivative_values=NA,
+                                derivative.values=NA,
                                 times.new=x.long,
                                 num.folds=5,
                                 lambda="optim")

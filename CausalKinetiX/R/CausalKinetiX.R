@@ -26,8 +26,6 @@
 ##' 
 ##' @export
 ##'
-##' @import quadprog
-##'
 ##' @author Niklas Pfister, Stefan Bauer and Jonas Peters
 ##'
 ##' @references

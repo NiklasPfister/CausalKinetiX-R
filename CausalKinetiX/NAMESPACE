@@ -2,6 +2,6 @@
 
 export(CausalKinetiX)
 export(constrained.smoothspline)
-import("cvTools,")
-import("fda,")
+import(cvTools)
+import(fda)
 import(quadprog)

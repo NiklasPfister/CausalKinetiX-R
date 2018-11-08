@@ -7,10 +7,10 @@
 ##'   length as y.
 ##' @param pen.degree desired degree of the derivative in smoothing
 ##'   penalty.
-##' @param contraint one of 'none', 'fixed' or 'bounded' depending on
+##' @param constraint one of 'none', 'fixed' or 'bounded' depending on
 ##'   whether the derivatives should not be constrained, fixed to a
 ##'   constant or bounded in an interval, respectively.
-##' @param derivative.value either a vector with the same length as y
+##' @param derivative.values either a vector with the same length as y
 ##'   if contraint=='fixed' or a matrix with 2 columns conatining the
 ##'   lower and upper bounds on the derivatives if
 ##'   contraint=='bounded'.
@@ -36,7 +36,7 @@
 ##' 
 ##' @export
 ##'
-##' @import fda, cvTools, quadprog
+##' @import fda cvTools quadprog
 ##'
 ##' @author Niklas Pfister, Stefan Bauer and Jonas Peters
 ##'
@@ -61,7 +61,7 @@
 ##'                                 times=x,
 ##'                                 pen.degree=2,
 ##'                                 constraint="none",
-##'                                 derivative_values=NA,
+##'                                 derivative.values=NA,
 ##'                                 times.new=x.long,
 ##'                                 num.folds=5,
 ##'                                 lambda="optim")
@@ -92,31 +92,31 @@ constrained.smoothspline <- function(y,
   times <- ux
     
   ## Initialize some variables
-  order_splines <- pen_degree+2
+  order_splines <- pen.degree+2
   
   ## Construct folds for CV
 
-  if(nun.folds=="leave-one-out"){
+  if(num.folds=="leave-one-out"){
     folds <- vector("list", length(times))
     for(i in 1:length(times)){
       folds[[i]] <- i
     }
-    nun.folds <- length(folds)
+    num.folds <- length(folds)
   }
-  else if(is.numeric(nun.folds)){
-    if(nun.folds>1){
-      folds_tmp <- cvFolds(length(times), K=nun.folds, type="interleaved")
-      folds <- vector("list", nun.folds)
-      for(i in 1:nun.folds){
+  else if(is.numeric(num.folds)){
+    if(num.folds>1){
+      folds_tmp <- cvFolds(length(times), K=num.folds, type="interleaved")
+      folds <- vector("list", num.folds)
+      for(i in 1:num.folds){
         folds[[i]] <- folds_tmp$subsets[folds_tmp$which == i]
       }
     }
     else{
-      stop("nun.folds should be at least 2")
+      stop("num.folds should be at least 2")
     }
   }
   else{
-    stop("nun.folds was specified incorrectly")
+    stop("num.folds was specified incorrectly")
   }
 
   ## Function to ensure matrix is positive definite
@@ -143,19 +143,19 @@ constrained.smoothspline <- function(y,
 
   # intialize basis
   basis <- create.bspline.basis(norder=order_splines, breaks=times)
-  penmat <- getbasispenalty(basis,Lfdobj=pen_degree)
+  penmat <- getbasispenalty(basis,Lfdobj=pen.degree)
 
   # CV variables
   if(!is.numeric(lambda)){
-    meq <- vector("numeric", nun.folds)
-    dvec <- vector("list", nun.folds)
-    Amat <- vector("list", nun.folds)
-    bvec <- vector("list", nun.folds)
-    Dmat_1 <- vector("list", nun.folds)
-    Bmat.val <- vector("list", nun.folds)
-    validation <- vector("list", nun.folds)
+    meq <- vector("numeric", num.folds)
+    dvec <- vector("list", num.folds)
+    Amat <- vector("list", num.folds)
+    bvec <- vector("list", num.folds)
+    Dmat_1 <- vector("list", num.folds)
+    Bmat.val <- vector("list", num.folds)
+    validation <- vector("list", num.folds)
     # compute the basis variables for each fold
-    for(i in 1:nun.folds){
+    for(i in 1:num.folds){
       train <- (1:length(times))[-folds[[i]]]
       validation[[i]] <- folds[[i]]
       train_y <- matrix(y[train], nrow=1)
@@ -215,7 +215,7 @@ constrained.smoothspline <- function(y,
     lambda <- r*256^(3*spar-1)
     Dmat_2 <- lambda * penmat
     rss <- 0
-    for(i in 1:nun.folds){
+    for(i in 1:num.folds){
       Dmat <- Dmat_1[[i]] + Dmat_2
       sc <- norm(Dmat, "F")
       Dmatsc <- Dmat/sc
@@ -231,7 +231,7 @@ constrained.smoothspline <- function(y,
       # compute validation error
       rss <- rss + sum((y[validation[[i]]]-Bmat.val[[i]]%*%csol)^2)
     }
-    return(rss/nun.folds)
+    return(rss/num.folds)
   }
   
     
