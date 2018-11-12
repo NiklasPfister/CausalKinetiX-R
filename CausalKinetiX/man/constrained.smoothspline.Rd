@@ -85,9 +85,6 @@ Pfister, N., S. Bauer, J. Peters (2018).
 Identifying Causal Structure in Large-Scale Kinetic Systems
 ArXiv e-prints (arXiv:1810.11776).
 }
-\seealso{
-
-}
 \author{
 Niklas Pfister, Stefan Bauer and Jonas Peters
 }

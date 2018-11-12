@@ -46,7 +46,8 @@ Identifying Causal Structure in Large-Scale Kinetic Systems
 ArXiv e-prints (arXiv:1810.11776).
 }
 \seealso{
-
+The function \code{\link{CausalKinetiX}} is a wrapper for
+  this function that also computes the variable ranking.
 }
 \author{
 Niklas Pfister, Stefan Bauer and Jonas Peters

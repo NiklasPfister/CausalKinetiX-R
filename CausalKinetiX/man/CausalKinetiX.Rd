@@ -4,7 +4,7 @@
 \alias{CausalKinetiX}
 \title{CausalKinetiX}
 \usage{
-CausalKinetiX(D, times, env, target, models = NA, pars)
+CausalKinetiX(D, times, env, target, models = NA, pars = list())
 }
 \arguments{
 \item{D}{data matrix. Should have dimension n x (L*d), where n is
@@ -43,7 +43,18 @@ For further details see the references.
 }
 \examples{
 
-x <- 4
+## Generate data from Maillard reaction
+simulation.obj <- generate.data.maillard(target=4,
+                                         env=rep(1:5, 5),
+                                         L=20)
+
+D <- simulation.obj$simulated.data
+time <- simulation.obj$time
+env <- simulation.obj$env
+target <- simulation.obj$target
+
+## Fit data using CausalKinetiX
+ck.fit <- CausalKinetiX(D, time, env, target)
 }
 \references{
 Pfister, N., S. Bauer, J. Peters (2018).
@@ -51,7 +62,8 @@ Identifying Causal Structure in Large-Scale Kinetic Systems
 ArXiv e-prints (arXiv:1810.11776).
 }
 \seealso{
-
+The function \code{\link{CausalKinetiX.modelranking}} can
+  be used if the variable ranking is not required.
 }
 \author{
 Niklas Pfister, Stefan Bauer and Jonas Peters
