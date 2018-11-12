@@ -26,6 +26,8 @@
 ##' 
 ##' @export
 ##'
+##' @import stats
+##' 
 ##' @author Niklas Pfister, Stefan Bauer and Jonas Peters
 ##'
 ##' @references
@@ -33,28 +35,40 @@
 ##' Identifying Causal Structure in Large-Scale Kinetic Systems
 ##' ArXiv e-prints (arXiv:1810.11776).
 ##'
-##' @seealso 
+##' @seealso The function \code{\link{CausalKinetiX.modelranking}} can
+##'   be used if the variable ranking is not required.
 ##'
 ##' @examples
 ##'
-##' x <- 4
+##' ## Generate data from Maillard reaction
+##' simulation.obj <- generate.data.maillard(target=4,
+##'                                          env=rep(1:5, 5),
+##'                                          L=20)
+##'
+##' D <- simulation.obj$simulated.data
+##' time <- simulation.obj$time
+##' env <- simulation.obj$env
+##' target <- simulation.obj$target
+##'
+##' ## Fit data using CausalKinetiX
+##' ck.fit <- CausalKinetiX(D, time, env, target)
 
 CausalKinetiX <- function(D,
                           times,
                           env,
                           target,
                           models=NA,
-                          pars){
+                          pars=list()){
 
   # set defaults for pars
   if(!exists("max.preds", pars)){
-    pars$max.preds <- TRUE
+    pars$max.preds <- FALSE
   }
   if(!exists("expsize", pars)){
     pars$expsize <- 2
   }
   if(!exists("interactions", pars)){
-    pars$interactions <- TRUE
+    pars$interactions <- FALSE
   }
   if(!exists("include.vars", pars)){
     pars$include.vars <- NA
@@ -69,10 +83,10 @@ CausalKinetiX <- function(D,
     pars$stability.selection <- TRUE
   }
   if(!exists("individual.models", pars)){
-    pars$individual.models <- FALSE
+    pars$individual.models <- TRUE
   }
   if(!exists("rm.target",pars)){
-    pars$rm.target <- TRUE
+    pars$rm.target <- FALSE
   }
   if(!exists("screening",pars)){
     pars$screening <- NA
@@ -132,13 +146,13 @@ CausalKinetiX <- function(D,
   Mlen <- length(models)
   Mjlen <- sapply(1:d, function(j) sum(sapply(models, function(mod) j %in% unlist(mod))))
   # compute p-values based on hypergeometric distribution
-  best_mods <- models[order(model.scores)[1:K]]
+  best_mods <- models[order(model.scores)[1:pars$K]]
   var_scores <- sapply(1:d,
                        function(x) sum(x==unlist(
-                         lapply(best_mods, function(y) unique(unlist(y))))))/K
-  var_pvals <- sapply(1:d, function(j) phyper(var_scores[j]*K, Mjlen[j],
+                         lapply(best_mods, function(y) unique(unlist(y))))))/pars$K
+  var_pvals <- sapply(1:d, function(j) phyper(var_scores[j]*pars$K, Mjlen[j],
                                               Mlen-Mjlen[j],
-                                              K, lower.tail=FALSE))
+                                              pars$K, lower.tail=FALSE))
   var_pvals[Mjlen==0] <- Inf
   if(pars$rm.target){
     idx <- order(var_pvals[-target])

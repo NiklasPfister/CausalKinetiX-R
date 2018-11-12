@@ -45,7 +45,6 @@
 ##' Identifying Causal Structure in Large-Scale Kinetic Systems
 ##' ArXiv e-prints (arXiv:1810.11776).
 ##'
-##' @seealso 
 ##'
 ##' @examples
 ##' ## Example
