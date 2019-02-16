@@ -24,7 +24,20 @@ each repetition belongs.}
 vectors specifiying the variables included in the interactions
 of each term.}
 
-\item{pars}{list of parameters.}
+\item{pars}{list of the following parameters: \code{max.preds}
+  (default FALSE) if TRUE also models with lower terms included,
+  \code{expsize} (default 2) the expected number of terms,
+  \code{interactions} (default FALSE) specifies whether to include
+  interactions in the models, \code{products} (default FALSE)
+  specifies whether to include products in the models,
+  \code{include.vars} (default NA) specifies variables that should
+  be included in each model, \code{maineffect.models} (default
+  FALSE) main-effect models or exhaustive models, \code{screening}
+  (default NA) specifies how many variables to screen down,
+  \code{K} (default NA) cutoff paramter used in variable ranking.
+
+  Additionally all parameters used in CausalKinetiX.modelranking
+  can also be specified here.}
 }
 \value{
 object of class 'CausalKinetiX' consisting of the following
@@ -36,7 +49,7 @@ object of class 'CausalKinetiX' consisting of the following
 \item{ranking}{vector specifying the ranking of each variable.}
 }
 \description{
-Applies CausalKinetiX framework to rank variables and models according to their stability
+Applies CausalKinetiX framework to rank variables and models according to their stability.
 }
 \details{
 For further details see the references.

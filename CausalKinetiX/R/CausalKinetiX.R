@@ -1,4 +1,4 @@
-##' Applies CausalKinetiX framework to rank variables and models according to their stability
+##' Applies CausalKinetiX framework to rank variables and models according to their stability.
 ##'
 ##' For further details see the references.
 ##' @title CausalKinetiX
@@ -11,10 +11,23 @@
 ##' @param env integer vector of length n encoding to which experiment
 ##'   each repetition belongs.
 ##' @param target integer specifing which variable is the target.
-##' @param pars list of parameters.
 ##' @param models list of models. Each model is specified by a list of
 ##'   vectors specifiying the variables included in the interactions
 ##'   of each term.
+##' @param pars list of the following parameters: \code{max.preds}
+##'   (default FALSE) if TRUE also models with lower terms included,
+##'   \code{expsize} (default 2) the expected number of terms,
+##'   \code{interactions} (default FALSE) specifies whether to include
+##'   interactions in the models, \code{products} (default FALSE)
+##'   specifies whether to include products in the models,
+##'   \code{include.vars} (default NA) specifies variables that should
+##'   be included in each model, \code{maineffect.models} (default
+##'   FALSE) main-effect models or exhaustive models, \code{screening}
+##'   (default NA) specifies how many variables to screen down,
+##'   \code{K} (default NA) cutoff paramter used in variable ranking.
+##'
+##'   Additionally all parameters used in CausalKinetiX.modelranking
+##'   can also be specified here.
 ##' 
 ##' @return object of class 'CausalKinetiX' consisting of the following
 ##'   elements
@@ -70,20 +83,14 @@ CausalKinetiX <- function(D,
   if(!exists("interactions", pars)){
     pars$interactions <- FALSE
   }
-  if(!exists("include.vars", pars)){
-    pars$include.vars <- NA
-  }
   if(!exists("products", pars)){
     pars$products <- FALSE
   }
-  if(!exists("stability.cutoff", pars)){
-    pars$stability.cutoff <- 3/4
+  if(!exists("include.vars", pars)){
+    pars$include.vars <- NA
   }
-  if(!exists("stability.selection", pars)){
-    pars$stability.selection <- TRUE
-  }
-  if(!exists("individual.models", pars)){
-    pars$individual.models <- TRUE
+  if(!exists("maineffect.models", pars)){
+    pars$maineffect.models <- TRUE
   }
   if(!exists("rm.target",pars)){
     pars$rm.target <- FALSE
@@ -113,7 +120,7 @@ CausalKinetiX <- function(D,
   # Check whether a list of models was specified else generate models
   if(is.na(models)){
     constructed_mods <- construct_models(D, L, d, n, target, times,
-                                         pars$individual.models,
+                                         pars$maineffect.models,
                                          pars$screening,
                                          pars$interactions,
                                          pars$products,
@@ -129,7 +136,7 @@ CausalKinetiX <- function(D,
 
   # check whether parameter K was specified
   if(is.na(pars$K)){
-    warning("K was not specified and the default does not make sense for arbitrary lists of models. It was set 1, but this can invalidate the variable ranking.")
+    warning("K was not specified and the default does not make sense for arbitrary lists of models. It was set to 1, but this can invalidate the variable ranking.")
     pars$K <- 1
   }
       
@@ -154,16 +161,10 @@ CausalKinetiX <- function(D,
                                               Mlen-Mjlen[j],
                                               pars$K, lower.tail=FALSE))
   var_pvals[Mjlen==0] <- Inf
-  if(pars$rm.target){
-    idx <- order(var_pvals[-target])
-    ranking <- ((1:d)[-target])[idx]
-    scores <- (var_pvals[-target])[idx]
-  }
-  else{
-    idx <- order(var_pvals)
-    ranking <- ((1:d))[idx]
-    scores <- (var_pvals)[idx]
-  }
+  
+  idx <- order(var_pvals)
+  ranking <- ((1:d))[idx]
+  scores <- (var_pvals)[idx]
 
   # output results
   return(list(models=models,

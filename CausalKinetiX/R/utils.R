@@ -78,12 +78,12 @@ ode_integratedlasso_rank_vars <- function(D,
 
 
 construct_models <- function(D, L, d, n, target, times,
-                             individual.models, screening,
+                             maineffects.models, screening,
                              interactions, products, include.vars,
                              max_preds, expsize, env=NULL){
 
-  ## Main-Effect and Full-Effect models depends on individual.models
-  if(individual.models){
+  ## Main-Effect and Full-Effect models depends on maineffects.models
+  if(!maineffects.models){
     # construct variable vector
     if(!is.na(include.vars)[1]){
       vv <- (1:d)[-include.vars[include.vars!=0]]
@@ -146,7 +146,7 @@ construct_models <- function(D, L, d, n, target, times,
   }
   else{
     if(!is.na(include.vars)){
-      warning("include.vars is not defined for individual.models==FALSE")
+      warning("include.vars is not defined for maineffects.models==FALSE")
     }
     ## Construct models
     if(max_preds){

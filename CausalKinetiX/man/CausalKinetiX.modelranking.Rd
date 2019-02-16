@@ -24,17 +24,42 @@ each repetition belongs.}
 vectors specifiying the variables included in the interactions
 of each term.}
 
-\item{pars}{list of parameters.}
+\item{pars}{list of the following parameters: \code{pen.degree}
+(default 2) specifies the penalization degree in the smoothing
+spline, \code{num.folds} (default 2) number of folds used in
+cross-validation of smoothing spline, \code{include.vars}
+(default NA) specifies variables that should be included in each
+model, \code{include.intercept} (default FALSE) specifies
+whether to include a intercept in models, \code{pooling}
+(default FALSE) specifies whether to pool repetitions in each
+environment, \code{smoothing} (default FALSE) specifies whether
+to smooth data observations before fitting, \code{smooth.Y}
+(default FALSE) specifies whether to smooth target observations
+before fitting, \code{regression.class} (default OLS) other
+options are signed.OLS, optim, random.forest,
+\code{sample.splitting} (default "loo") either leave-one-out
+(loo) or no splitting (none), \code{score.type} (default "mean")
+specifies the type of score funtion to use,
+\code{integrated.model} (default TRUE) specifies whether to fit
+the integrated or the derived model, \code{splitting.env}
+(default NA) an additonal environment vector used for scoring,
+\code{weight.vec} (default rep(1, length(env)) a weight vector
+used in the scoring, \code{set.initial} (default FALSE)
+specifies whether to fix the initial value, \code{silent}
+(default TRUE) turn of additional output, \code{show.plot}
+(default FALSE) show diagnostic plots.}
 }
 \value{
 returns a vector with the same length as models containing
   the stability scores
 }
 \description{
-Applies CausalKinetiX framework to rank a list models according to their stability
+Applies CausalKinetiX framework to rank a list models according to
+their stability.
 }
 \details{
-This function only scores specified models and does not include a variable ranking.
+This function only scores specified models and does not include a
+variable ranking.
 }
 \examples{
 

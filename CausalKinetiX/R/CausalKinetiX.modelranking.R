@@ -1,6 +1,8 @@
-##' Applies CausalKinetiX framework to rank a list models according to their stability
+##' Applies CausalKinetiX framework to rank a list models according to
+##' their stability.
 ##'
-##' This function only scores specified models and does not include a variable ranking.
+##' This function only scores specified models and does not include a
+##' variable ranking.
 ##' @title CausalKinetix.modelranking
 ##' @param D data matrix. Should have dimension n x (L*d), where n is
 ##'   the number of repetitions (over all experiments), L is the
@@ -14,7 +16,30 @@
 ##' @param models list of models. Each model is specified by a list of
 ##'   vectors specifiying the variables included in the interactions
 ##'   of each term.
-##' @param pars list of parameters.
+##' @param pars list of the following parameters: \code{pen.degree}
+##'   (default 2) specifies the penalization degree in the smoothing
+##'   spline, \code{num.folds} (default 2) number of folds used in
+##'   cross-validation of smoothing spline, \code{include.vars}
+##'   (default NA) specifies variables that should be included in each
+##'   model, \code{include.intercept} (default FALSE) specifies
+##'   whether to include a intercept in models, \code{pooling}
+##'   (default FALSE) specifies whether to pool repetitions in each
+##'   environment, \code{smoothing} (default FALSE) specifies whether
+##'   to smooth data observations before fitting, \code{smooth.Y}
+##'   (default FALSE) specifies whether to smooth target observations
+##'   before fitting, \code{regression.class} (default OLS) other
+##'   options are signed.OLS, optim, random.forest,
+##'   \code{sample.splitting} (default "loo") either leave-one-out
+##'   (loo) or no splitting (none), \code{score.type} (default "mean")
+##'   specifies the type of score funtion to use,
+##'   \code{integrated.model} (default TRUE) specifies whether to fit
+##'   the integrated or the derived model, \code{splitting.env}
+##'   (default NA) an additonal environment vector used for scoring,
+##'   \code{weight.vec} (default rep(1, length(env)) a weight vector
+##'   used in the scoring, \code{set.initial} (default FALSE)
+##'   specifies whether to fix the initial value, \code{silent}
+##'   (default TRUE) turn of additional output, \code{show.plot}
+##'   (default FALSE) show diagnostic plots.
 ##' 
 ##' @return returns a vector with the same length as models containing
 ##'   the stability scores
@@ -72,23 +97,14 @@ CausalKinetiX.modelranking <- function(D,
   if(!exists("smooth.Y",pars)){
     pars$smooth.Y <- FALSE
   }
-  if(!exists("interactions",pars)){
-    pars$interactions <- FALSE
-  }
-  if(!exists("products",pars)){
-    pars$products <- FALSE
-  }
   if(!exists("regression.class", pars)){
     pars$regression.class <- "OLS"
   }
   if(!exists("sample.splitting",pars)){
     pars$sample.splitting <- "loo"
   }
-  if(!exists("proportional.score",pars)){
-    pars$proportional.score <- TRUE
-  }
   if(!exists("score.type",pars)){
-    pars$score.type <- "mean2"
+    pars$score.type <- "mean"
   }
   if(!exists("integrated.model",pars)){
     pars$integrated.model <- TRUE
@@ -111,7 +127,7 @@ CausalKinetiX.modelranking <- function(D,
 
   ## Parameter consistency checks
   if(pars$smooth.Y & !is.na(pars$splitting.env)){
-    stop("if smooth.Y is TRUE, splitting.env needs to be NA")
+    stop("If smooth.Y is TRUE, splitting.env needs to be NA.")
   }
 
   
@@ -134,8 +150,6 @@ CausalKinetiX.modelranking <- function(D,
   include.intercept <- pars$include.intercept
   pooling <- pars$pooling
   smoothing <- pars$smoothing
-  interactions <- pars$interactions
-  products <- pars$products
   score.type <- pars$score.type
   silent <- pars$silent
   sample.splitting <- pars$sample.splitting
@@ -144,6 +158,12 @@ CausalKinetiX.modelranking <- function(D,
   weight.vec <- pars$weight.vec
   regression.class <- pars$regression.class
   show.plot <- pars$show.plot
+
+  # check whether to include products and interactions
+  products <- sum(sapply(models, function(model)
+    sum(sapply(model, function(term) length(term) > length(unique(term)))) > 0)) > 0
+  interactions <- sum(sapply(models, function(model)
+    sum(sapply(model, function(term) length(unique(term)) > 1)) > 0)) > 0
 
   # sort environments to increasing order
   if(is.na(splitting.env)[1]){
@@ -270,7 +290,7 @@ CausalKinetiX.modelranking <- function(D,
     lambda <- vector("numeric", num_env)
     initial_values <- vector("numeric", num_env)
     times_new <- 0
-    if(!silent){
+    if(!silent | show.plot){
       Ya <- vector("list", num_env)
       Yb <- vector("list", num_env)
       times_new <- seq(min(times), max(times), length.out=100)
@@ -291,7 +311,7 @@ CausalKinetiX.modelranking <- function(D,
                                       times.new=times_new,
                                       num.folds=num.folds,
                                       lambda="optim")
-      if(!silent){
+      if(!silent | show.plot){
         Yb[[i]] <- fit$smooth.vals.new
       }
       dYlist[[i]] <- rep(fit$smooth.deriv, len_env)
@@ -299,7 +319,7 @@ CausalKinetiX.modelranking <- function(D,
       if(pars$integrated.model){
         dYlist[[i]] <- as.vector(apply(DmatY[env==unique_env[i],,drop=FALSE], 1, diff))
       }
-      if(!silent){
+      if(!silent | show.plot){
         Ya[[i]] <- fit$smooth.vals.new
       }
       lambda[i] <- fit$pen.par
@@ -324,7 +344,7 @@ CausalKinetiX.modelranking <- function(D,
     lambda <- vector("numeric", n)
     initial_values <- vector("numeric", n)
     times_new <- 0
-    if(!silent){
+    if(!silent | show.plot){
       Ya <- vector("list", n)
       Yb <- vector("list", n)
       times_new <- seq(min(times), max(times), length.out=100)
@@ -344,7 +364,7 @@ CausalKinetiX.modelranking <- function(D,
                                       times.new=times_new,
                                       num.folds=num.folds,
                                       lambda="optim")
-      if(!silent){
+      if(!silent | show.plot){
         Yb[[i]] <- fit$smooth.vals.new
       }
       dYlist[[i]] <- fit$smooth.deriv
@@ -363,7 +383,7 @@ CausalKinetiX.modelranking <- function(D,
                                         num.folds=num.folds,
                                         lambda="optim")
       }
-      if(!silent){
+      if(!silent | show.plot){
         Ya[[i]] <- fit$smooth.vals.new
       }
       lambda[i] <- fit$pen.par
@@ -414,7 +434,7 @@ CausalKinetiX.modelranking <- function(D,
     
     ## collect predictors X
     Xlist <- vector("list", n)
-    num.pred <- length(unlist(modelstot[[model]]))+include.intercept#+include.Y
+    num.pred <- length(unlist(modelstot[[model]]))+include.intercept
     if(num.pred==0){
       num.pred <- 1
       for(i in 1:n){
@@ -434,7 +454,7 @@ CausalKinetiX.modelranking <- function(D,
     # compute predictors for integrated model fit
     if(pars$integrated.model){
       Xlist2 <- vector("list", n)
-      num.pred <- length(unlist(modelstot[[model]]))+include.intercept#+include.Y
+      num.pred <- length(unlist(modelstot[[model]]))+include.intercept
       if(num.pred==0){
         num.pred <- 1
         for(i in 1:n){
@@ -818,6 +838,7 @@ CausalKinetiX.modelranking <- function(D,
             plot(times1, Y1plot, xlab="times", ylab="concentration",
                  ylim = c(miny, maxy))
             which_ind <- which(env_ind)
+            print(str(Ya))
             for(k in which_ind){
               lines(times_new, Ya[[k]], col="red")
               lines(times_new, Yb[[k]], col="blue")
