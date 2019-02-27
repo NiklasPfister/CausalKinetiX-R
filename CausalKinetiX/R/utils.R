@@ -20,6 +20,9 @@ ode_integratedlasso_rank_vars <- function(D,
   if(!exists("rm.target",pars)){
     pars$rm.target <- TRUE
   }
+  if(!exists("signed",pars)){
+    pars$signed <- FALSE
+  }
   
   L <- length(times)
   d <- ncol(D)/L
@@ -50,8 +53,14 @@ ode_integratedlasso_rank_vars <- function(D,
     for(i in (d+1):length(var.names)){
       Xint.interactions[,i] <- Xint[,var.names[[i]][1]] * Xint[,var.names[[i]][2]]
     }
-    fit <- glmnet(Xint.interactions, deltaY)
-    sel.matrix <- (fit$beta != 0)
+    if(pars$signed){
+      fit <- nnlasso(Xint.interactions, deltaY, family="normal", path=TRUE, min.lambda = 1e-15)
+      sel.matrix <- (t(fit$coef) > max(fit$coef[1,]))
+    }
+    else{
+      fit <- glmnet(Xint.interactions, deltaY)
+      sel.matrix <- (fit$beta != 0)
+    }
     first.entrance <- apply(sel.matrix, MARGIN = 1, FUN = which.max)
     # find all rows without ones and set first entrance to Inf
     first.entrance[which(apply(sel.matrix, MARGIN = 1, FUN = sum) == 0)] <- Inf
@@ -59,8 +68,14 @@ ode_integratedlasso_rank_vars <- function(D,
     ranking <- unique(unlist(var.names[ranking]))
   }
   else{
-    fit <- glmnet(Xint, deltaY)
-    sel.matrix <- (fit$beta != 0)
+    if(pars$signed){
+      fit <- nnlasso(Xint, deltaY, family="normal", path=TRUE, min.lambda = 1e-15)
+      sel.matrix <- (t(fit$coef) > max(fit$coef[1,]))
+    }
+    else{
+      fit <- glmnet(Xint, deltaY)
+      sel.matrix <- (fit$beta != 0)
+    }
     first.entrance <- apply(sel.matrix, MARGIN = 1, FUN = which.max)
     # find all rows without ones and set first entrance to Inf
     first.entrance[which(apply(sel.matrix, MARGIN = 1, FUN = sum) == 0)] <- Inf
@@ -80,7 +95,7 @@ ode_integratedlasso_rank_vars <- function(D,
 construct_models <- function(D, L, d, n, target, times,
                              maineffects.models, screening,
                              interactions, products, include.vars,
-                             max_preds, expsize, env=NULL){
+                             max_preds, expsize, env=NULL, signed=FALSE){
 
   ## Main-Effect and Full-Effect models depends on maineffects.models
   if(!maineffects.models){
@@ -100,7 +115,8 @@ construct_models <- function(D, L, d, n, target, times,
                                            times,
                                            env=env,
                                            target, list(interactions=FALSE,
-                                                        rm.target=FALSE))$ranking
+                                                        rm.target=FALSE,
+                                                        signed=signed))$ranking
       keep_terms <- ordering[res[1:screening]]
       ## print(keep_terms)
       num_terms <- screening
@@ -203,6 +219,9 @@ extend_Dmat <- function(D, L, d, n,
 
   # initialize
   num_vars <- dnew + products*dnew + interactions*choose(dnew, 2)
+  if(length(vv) == 1){
+    num_vars <- dnew + products*dnew
+  }
   Dnew <- matrix(NA, n, L*num_vars)
   Dnew[,1:(dnew*L)] <- D[,vv_ind]
   ordering <- vector("list", num_vars)
@@ -210,7 +229,7 @@ extend_Dmat <- function(D, L, d, n,
   count <- dnew
   
   # add interactions
-  if(interactions){
+  if(interactions & length(vv) >1){
     for(i in 1:(dnew-1)){
       indi <- ((vv[i]-1)*L+1):(vv[i]*L)
       for(j in (i+1):dnew){

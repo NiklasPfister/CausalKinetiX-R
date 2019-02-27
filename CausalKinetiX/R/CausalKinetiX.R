@@ -103,13 +103,20 @@ CausalKinetiX <- function(D,
   }
 
   
-  # for random forest regression remove interactions
   if(exists("regression.class", pars)){
+    # for random forest regression remove interactions
     if(pars$regression.class == "random.forest"){
       pars$interactions <- FALSE
       pars$interactions.Y <- FALSE
       pars$include.intercept <- FALSE
     }
+    # set signed to TRUE if regression class is signed.OLS
+    if(pars$regression.class == "signed.OLS"){
+      signed <- TRUE
+    }
+  }
+  else{
+    signed <- FALSE
   }
 
   # read out variables
@@ -127,7 +134,7 @@ CausalKinetiX <- function(D,
                                          pars$include.vars,
                                          pars$max.preds,
                                          pars$expsize,
-                                         env)
+                                         env, signed)
     models <- constructed_mods$models
     if(is.na(pars$K)){
       pars$K <- constructed_mods$num_terms-pars$expsize
