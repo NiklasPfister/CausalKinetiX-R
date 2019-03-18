@@ -2,7 +2,7 @@
 # Small helper functions that are not exported
 ###
 
-##' @import utils glmnet
+##' @import utils glmnet nnlasso
 
 ## Lasso based on deltaY vs intX
 ode_integratedlasso_rank_vars <- function(D,
