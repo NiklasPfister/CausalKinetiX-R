@@ -4,11 +4,11 @@
 \alias{generate.data.hidden}
 \title{Hidden variable model}
 \usage{
-generate.data.hidden(env = rep(1, 10), L = 15, par.noise = list(noise
-  = 0.01, only.target.noise = TRUE, relativ = FALSE),
-  intervention = "initial_blockreactions5", hidden = TRUE,
-  intervention.par = NA, ode.solver = "lsoda", seed = NA,
-  silent = FALSE)
+generate.data.hidden(env = rep(1, 10), L = 15,
+  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, relativ =
+  FALSE), intervention = "initial_blockreactions",
+  intervention.par = 0.1, hidden = TRUE, ode.solver = "lsoda",
+  seed = NA, silent = FALSE)
 }
 \arguments{
 \item{env}{integer vector of length n encoding to which experiment
@@ -16,21 +16,39 @@ each repetition belongs.}
 
 \item{L}{number of time points for evaluation.}
 
-\item{par.noise}{list of parameters that specify the added noise.}
+\item{par.noise}{list of parameters that specify the added
+noise. \code{noise.sd} specifies the standard deviation of
+noise, \code{only.target.noise} specifies whether to only add
+noise to target and \code{relative} specifies if the size of the
+noise should be relative to size of variable (if TRUE standard
+deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).}
 
-\item{intervention}{type of intervention.}
+\item{intervention}{string specifying type of
+intervention. Currently three type of interventions are
+implemented "initial" (only intervene on intial values),
+"blockreactions" (intervene by blocking random reactions) or
+"intial_blockreactions" (intervene on both initial values and
+blockreactions").}
+
+\item{intervention.par}{if intervention is either "blockreactions"
+or "initial_blockreactions", the rate constant k_7 is set to a
+noisy version of k_4. This parameter specifies size of this
+noise, more precisely k_7 is set to k_4 + \code{runif(1,
+-intervention.par, intervention.par)}.}
 
 \item{hidden}{boolean whether the variables H1 and H2 should be
 removed from output.}
 
-\item{intervention.par}{parameters used in the interventions.}
+\item{ode.solver}{string specifying which ODE solver to use when
+solving ODE. Should be one of the methods from the
+\code{deSolve} package ("lsoda", "lsode", "lsodes", "lsodar",
+"vode", "daspk", "euler", "rk4", "ode23", "ode45", "radau",
+"bdf", "bdf_d", "adams", "impAdams", "impAdams_d", "iteration").}
 
-\item{ode.solver}{specifies which ODE solver to use when solving
-ODE.}
+\item{seed}{random seed. Does not work if a "Detected blow-up"
+warning shows up.}
 
-\item{seed}{random seed.}
-
-\item{silent}{set to FALSE if status output should be produced.}
+\item{silent}{set to TRUE if no status output should be produced.}
 }
 \value{
 list consisting of the following elements
@@ -52,11 +70,11 @@ For further details see the references.
 
 simulation.obj <- generate.data.hidden(env=rep(1:5, 3),
                                        L=15,
-                                       par.noise=list(noise=0.02,
+                                       par.noise=list(noise.sd=0.02,
                                                       only.target.noise=FALSE,
                                                       relativ=TRUE),
-                                       intervention="initial_blockreactions5",
-                                       intervention.par=0.2)
+                                       intervention="initial_blockreactions",
+                                       intervention.par=0.1)
 
 D <- simulation.obj$simulated.data
 fulldata <- simulation.obj$simulated.model

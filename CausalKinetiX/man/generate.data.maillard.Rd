@@ -5,7 +5,7 @@
 \title{Maillard reaction}
 \usage{
 generate.data.maillard(target, env = rep(1, 10), L = 15,
-  par.noise = list(noise = 0.01, only.target.noise = TRUE, target = 1,
+  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, target = 1,
   relativ = FALSE), intervention = "initial_blockreactions",
   ode.solver = "lsoda", seed = NA, silent = FALSE)
 }
@@ -18,15 +18,32 @@ each repetition belongs.}
 
 \item{L}{number of time points for evaluation.}
 
-\item{par.noise}{list of parameters that specify the added noise.}
+\item{par.noise}{list of parameters that specify the added
+noise. \code{noise.sd} specifies the standard deviation of
+noise, \code{only.target.noise} specifies whether to only add
+noise to target, \code{target} specifies which variable should
+be seen as target (only relevant if \code{only.target.noise} is
+TRUE) and \code{relative} specifies if the size of the noise
+should be relative to size of variable (if TRUE standard
+deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).}
 
-\item{intervention}{type of intervention.}
+\item{intervention}{string specifying type of
+intervention. Currently three type of interventions are
+implemented "initial" (only intervene on intial values),
+"blockreactions" (intervene by blocking random reactions) or
+"intial_blockreactions" (intervene on both initial values and
+blockreactions").}
 
-\item{ode.solver}{specifies which ODE solver to use when solving ODE.}
+\item{ode.solver}{specifies which ODE solver to use when solving
+ODE. Should be one of the methods from the \code{deSolve}
+package ("lsoda", "lsode", "lsodes", "lsodar", "vode", "daspk",
+"euler", "rk4", "ode23", "ode45", "radau", "bdf", "bdf_d",
+"adams", "impAdams", "impAdams_d", "iteration").}
 
-\item{seed}{random seed.}
+\item{seed}{random seed. Does not work if a "Detected blow-up"
+warning shows up.}
 
-\item{silent}{set to FALSE if status output should be produced.}
+\item{silent}{set to TRUE if no status output should be produced.}
 }
 \value{
 list consisting of the following elements

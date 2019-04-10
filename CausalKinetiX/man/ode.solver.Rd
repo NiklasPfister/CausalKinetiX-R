@@ -36,7 +36,7 @@ order to save computational costs if not all variables given in
 \code{X} actually show up in \code{model}.}
 
 \item{smooth.type}{string. Specifies which type of smoothing to
-use. Following options exist: "smoothing.spline", "loess",
+use. The following options exist: "smoothing.spline", "loess",
 "linear", "constant".}
 
 \item{reltol}{numeric. Relative tolarance used in CVODE.}
@@ -47,7 +47,7 @@ use. Following options exist: "smoothing.spline", "loess",
 object returned by CVODE.
 }
 \description{
-Solves a Mass-action ODE for a target variable Y by using smooth
+Solves a mass-action ODE for a target variable Y by using smooth
 approximations of the predictor variables X.
 }
 \details{

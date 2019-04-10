@@ -8,11 +8,28 @@
 ##' @param env integer vector of length n encoding to which experiment
 ##'   each repetition belongs.
 ##' @param L number of time points for evaluation.
-##' @param par.noise list of parameters that specify the added noise.
-##' @param intervention type of intervention.
-##' @param ode.solver specifies which ODE solver to use when solving ODE.
-##' @param seed random seed.
-##' @param silent set to FALSE if status output should be produced.
+##' @param par.noise list of parameters that specify the added
+##'   noise. \code{noise.sd} specifies the standard deviation of
+##'   noise, \code{only.target.noise} specifies whether to only add
+##'   noise to target, \code{target} specifies which variable should
+##'   be seen as target (only relevant if \code{only.target.noise} is
+##'   TRUE) and \code{relative} specifies if the size of the noise
+##'   should be relative to size of variable (if TRUE standard
+##'   deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).
+##' @param intervention string specifying type of
+##'   intervention. Currently three type of interventions are
+##'   implemented "initial" (only intervene on intial values),
+##'   "blockreactions" (intervene by blocking random reactions) or
+##'   "intial_blockreactions" (intervene on both initial values and
+##'   blockreactions").
+##' @param ode.solver specifies which ODE solver to use when solving
+##'   ODE. Should be one of the methods from the \code{deSolve}
+##'   package ("lsoda", "lsode", "lsodes", "lsodar", "vode", "daspk",
+##'   "euler", "rk4", "ode23", "ode45", "radau", "bdf", "bdf_d",
+##'   "adams", "impAdams", "impAdams_d", "iteration").
+##' @param seed random seed. Does not work if a "Detected blow-up"
+##'   warning shows up.
+##' @param silent set to TRUE if no status output should be produced.
 ##' 
 ##' @return list consisting of the following elements
 ##' 
@@ -61,7 +78,7 @@
 generate.data.maillard <- function(target,
                                    env=rep(1,10),
                                    L=15,
-                                   par.noise=list(noise=0.01,
+                                   par.noise=list(noise.sd=0.01,
                                                   only.target.noise=TRUE,
                                                   target=1,
                                                   relativ=FALSE),
@@ -78,15 +95,14 @@ generate.data.maillard <- function(target,
   # Setting default parameters
   ###
   
-  if(!exists("only.target.noise",par.noise)){
-    par.noise$only.noise <- 0.01
-    warning("noise variance was not specified, it has been set to 0.01")
+  if(!exists("noise.sd",par.noise)){
+    par.noise$noise.sd <- 0.01
   }
   if(!exists("only.target.noise",par.noise)){
     par.noise$only.target.noise <- TRUE
   }
   if(!exists("target",par.noise)){
-    par.noise$only.target.noise <- 1
+    par.noise$target <- 1
   }
   if(!exists("relativ",par.noise)){
     par.noise$relativ <- FALSE
@@ -164,7 +180,7 @@ generate.data.maillard <- function(target,
   # Define interventions
   ###  
   
-  if(intervention == "only_initial"){
+  if(intervention == "initial"){
     intervention_fun <- function(){
       initial_int <- c(runif(1, 0, 360), runif(1, 0, 360), 0, 0, 0, 0, 0, 0, 0,
                        runif(1, 0, 30), 0)
@@ -172,7 +188,7 @@ generate.data.maillard <- function(target,
                   theta=theta_obs))
     }
   }
-  else if(intervention == "only_blockreactions"){
+  else if(intervention == "blockreactions"){
     intervention_fun <- function(){
       num_reactions <- d-length(included_reactions)
       r_vec <- (1:d)[-included_reactions]
@@ -237,7 +253,7 @@ generate.data.maillard <- function(target,
       target.ind <- ((par.noise$target-1)*L+1):(par.noise$target*L)
       tmp <- simulated.model[[i]][time.index, -1, drop=FALSE]
       if(par.noise$relativ){
-        noise_var <- par.noise$noise*diff(range(tmp[, par.noise$target]))+0.0000001
+        noise_var <- par.noise$noise.sd*diff(range(tmp[, par.noise$target]))+0.0000001
         noiseterm <- matrix(rnorm(L*env.size, 0, noise_var), env.size, L)
       }
       else{
@@ -249,11 +265,11 @@ generate.data.maillard <- function(target,
     else{
       tmp <- simulated.model[[i]][time.index, -1]
       if(par.noise$relativ){
-        noise_var <- apply(tmp, 2, function(x) par.noise$noise*diff(range(x)))+0.0000001
+        noise_var <- apply(tmp, 2, function(x) par.noise$noise.sd*diff(range(x)))+0.0000001
         noiseterm <- matrix(rnorm(L*d*env.size, 0, rep(rep(noise_var, each=L), env.size)), env.size, L*d, byrow=TRUE)
       }
       else{
-        noiseterm <- matrix(rnorm(L*d*env.size, 0, par.noise$noise), env.size, L*d)
+        noiseterm <- matrix(rnorm(L*d*env.size, 0, par.noise$noise.sd), env.size, L*d)
       }
       simulated.data[env==i,] <-  matrix(rep(tmp, env.size), env.size, L*d, byrow=TRUE) + noiseterm
     }

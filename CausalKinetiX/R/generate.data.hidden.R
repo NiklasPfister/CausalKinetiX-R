@@ -5,15 +5,33 @@
 ##' @param env integer vector of length n encoding to which experiment
 ##'   each repetition belongs.
 ##' @param L number of time points for evaluation.
-##' @param par.noise list of parameters that specify the added noise.
-##' @param intervention type of intervention.
-##' @param intervention.par parameters used in the interventions.
+##' @param par.noise list of parameters that specify the added
+##'   noise. \code{noise.sd} specifies the standard deviation of
+##'   noise, \code{only.target.noise} specifies whether to only add
+##'   noise to target and \code{relative} specifies if the size of the
+##'   noise should be relative to size of variable (if TRUE standard
+##'   deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).
+##' @param intervention string specifying type of
+##'   intervention. Currently three type of interventions are
+##'   implemented "initial" (only intervene on intial values),
+##'   "blockreactions" (intervene by blocking random reactions) or
+##'   "intial_blockreactions" (intervene on both initial values and
+##'   blockreactions").
+##' @param intervention.par if intervention is either "blockreactions"
+##'   or "initial_blockreactions", the rate constant k_7 is set to a
+##'   noisy version of k_4. This parameter specifies size of this
+##'   noise, more precisely k_7 is set to k_4 + \code{runif(1,
+##'   -intervention.par, intervention.par)}.
 ##' @param hidden boolean whether the variables H1 and H2 should be
 ##'   removed from output.
-##' @param ode.solver specifies which ODE solver to use when solving
-##'   ODE.
-##' @param seed random seed.
-##' @param silent set to FALSE if status output should be produced.
+##' @param ode.solver string specifying which ODE solver to use when
+##'   solving ODE. Should be one of the methods from the
+##'   \code{deSolve} package ("lsoda", "lsode", "lsodes", "lsodar",
+##'   "vode", "daspk", "euler", "rk4", "ode23", "ode45", "radau",
+##'   "bdf", "bdf_d", "adams", "impAdams", "impAdams_d", "iteration").
+##' @param seed random seed. Does not work if a "Detected blow-up"
+##'   warning shows up.
+##' @param silent set to TRUE if no status output should be produced.
 ##' 
 ##' @return list consisting of the following elements
 ##' 
@@ -43,11 +61,11 @@
 ##'
 ##' simulation.obj <- generate.data.hidden(env=rep(1:5, 3),
 ##'                                        L=15,
-##'                                        par.noise=list(noise=0.02,
+##'                                        par.noise=list(noise.sd=0.02,
 ##'                                                       only.target.noise=FALSE,
 ##'                                                       relativ=TRUE),
-##'                                        intervention="initial_blockreactions5",
-##'                                        intervention.par=0.2)
+##'                                        intervention="initial_blockreactions",
+##'                                        intervention.par=0.1)
 ##'
 ##' D <- simulation.obj$simulated.data
 ##' fulldata <- simulation.obj$simulated.model
@@ -61,12 +79,12 @@
 
 generate.data.hidden <- function(env=rep(1,10),
                                  L=15,
-                                 par.noise=list(noise=0.01,
+                                 par.noise=list(noise.sd=0.01,
                                                 only.target.noise=TRUE,
                                                 relativ=FALSE),
-                                 intervention="initial_blockreactions5",
+                                 intervention="initial_blockreactions",
+                                 intervention.par=0.1,
                                  hidden=TRUE,
-                                 intervention.par=NA,
                                  ode.solver="lsoda",
                                  seed=NA,
                                  silent=FALSE){
@@ -79,9 +97,8 @@ generate.data.hidden <- function(env=rep(1,10),
   # Setting default parameters
   ###
   
-  if(!exists("noise",par.noise)){
-    par.noise$noise <- 0.01
-    warning("noise variance was not specified, it has been set to 0.01")
+  if(!exists("noise.sd",par.noise)){
+    par.noise$noise.sd <- 0.01
   }
   if(!exists("only.target.noise",par.noise)){
     par.noise$only.target.noise <- TRUE
@@ -141,82 +158,14 @@ generate.data.hidden <- function(env=rep(1,10),
   # Define interventions
   ###
   
-  if(intervention == "only_initial"){
+  if(intervention == "initial"){
     intervention_fun <- function(){
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), 0, 0, 0)
+      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0)
       return(list(initial=initial_int,
                   theta=theta_obs))
     }
   }
-  else if(intervention == "only_blockreactions"){
-    intervention_fun <- function(){
-      r_vec <- (1:length(theta_obs))[-fixed_reactions]
-      num_reactions <- length(r_vec)
-      theta_int <- theta_obs
-      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-1/num_reactions)
-      return(list(initial=initial_obs,
-                  theta=theta_int))
-    }
-  }
-  else if(intervention == "initial_blockreactions1"){
-    true_set <- c(list(2), list(3))
-    intervention_fun <- function(){
-      r_vec <- (1:length(theta_obs))[-fixed_reactions]
-      num_reactions <- length(r_vec)
-      theta_int <- theta_obs
-      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-2/num_reactions)
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0)
-      return(list(initial=initial_int,
-                  theta=theta_int))
-    }
-  }
-  else if(intervention == "initial_blockreactions2"){
-    true_set <- c(list(3))
-    theta_obs[7] <- runif(1, 0, 1)
-    fixed_reactions <- c(4, 5)
-    intervention_fun <- function(){
-      r_vec <- (1:length(theta_obs))[-fixed_reactions]
-      num_reactions <- length(r_vec)
-      theta_int <- theta_obs
-      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-2/num_reactions)
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0)
-      return(list(initial=initial_int,
-                  theta=theta_int))
-    }
-  }
-  else if(intervention == "initial_blockreactions3"){
-    true_set <- c(list(3))
-    const <- intervention.par
-    theta_obs[7] <- theta_obs[4]+runif(1, -const, const)
-    fixed_reactions <- c(4, 5)
-    intervention_fun <- function(){
-      r_vec <- (1:length(theta_obs))[-fixed_reactions]
-      num_reactions <- length(r_vec)
-      theta_int <- theta_obs
-      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-2/num_reactions)
-      if(7 %in% r_vec){
-        theta_int[7] <- theta_obs[4]+runif(1, -const, const)
-      }
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0)
-      return(list(initial=initial_int,
-                  theta=theta_int))
-    }
-  }
-  else if(intervention == "initial_blockreactions4"){
-    true_set <- c(list(3))
-    theta_obs[7] <- intervention.par
-    fixed_reactions <- c(4, 5, 7)
-    intervention_fun <- function(){
-      r_vec <- (1:length(theta_obs))[-fixed_reactions]
-      num_reactions <- length(r_vec)
-      theta_int <- theta_obs
-      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-2/num_reactions)
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0, 0)
-      return(list(initial=initial_int,
-                  theta=theta_int))
-    }
-  }
-  else if(intervention == "initial_blockreactions5"){
+  else if(intervention == "blockreactions"){
     true_set <- c(list(3))
     fixed_reactions <- c(4, 5, 7)
     intervention_fun <- function(){
@@ -225,14 +174,31 @@ generate.data.hidden <- function(env=rep(1,10),
       theta_int <- theta_obs
       theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-1/num_reactions)
       theta_int[7] <- max(c(theta_obs[7] + runif(1, -intervention.par, intervention.par),0))
-      #theta_int[10] <- runif(1, 0, intervention.par)
       initial_int <- c(runif(1, 0, 10), 0, 0,
                        runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0, 0)
-      #initial_int[2] <- runif(1, 0, intervention.par)
+      return(list(initial=initial_obs,
+                  theta=theta_int))
+    }
+  }
+  else if(intervention == "initial_blockreactions"){
+    true_set <- c(list(3))
+    fixed_reactions <- c(4, 5, 7)
+    intervention_fun <- function(){
+      r_vec <- (1:length(theta_obs))[-fixed_reactions]
+      num_reactions <- length(r_vec)
+      theta_int <- theta_obs
+      theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-1/num_reactions)
+      theta_int[7] <- max(c(theta_obs[7] + runif(1, -intervention.par, intervention.par),0))
+      initial_int <- c(runif(1, 0, 10), 0, 0,
+                       runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0, 0)
       return(list(initial=initial_int,
                   theta=theta_int))
     }
   }
+  else{
+    stop("Specified intervention does not exist")
+  }
+
 
   ###
   # Generate data from exact ODE and generate observations
@@ -276,11 +242,11 @@ generate.data.hidden <- function(env=rep(1,10),
       target.ind <- ((target-1)*L+1):(target*L)
       tmp <- simulated.model[[i]][time.index, -1, drop=FALSE]
       if(par.noise$relativ){
-        noise_var <- par.noise$noise*diff(range(tmp[, target]))+0.0000001
+        noise_var <- par.noise$noise.sd*diff(range(tmp[, target]))+0.0000001
         noiseterm <- matrix(rnorm(L*env.size, 0, noise_var), env.size, L)
       }
       else{
-        noiseterm <- matrix(rnorm(L*env.size, 0, par.noise$noise), env.size, L)
+        noiseterm <- matrix(rnorm(L*env.size, 0, par.noise$noise.sd), env.size, L)
       }
       simulated.data[env==i, ] <- matrix(rep(tmp, env.size), env.size, L*d, byrow=TRUE)
       simulated.data[env==i, target.ind] <- simulated.data[env==i, target.ind] + noiseterm
@@ -288,11 +254,11 @@ generate.data.hidden <- function(env=rep(1,10),
     else{
       tmp <- simulated.model[[i]][time.index, -1]
       if(par.noise$relativ){
-        noise_var <- apply(tmp, 2, function(x) par.noise$noise*diff(range(x)))+0.0000001
+        noise_var <- apply(tmp, 2, function(x) par.noise$noise.sd*diff(range(x)))+0.0000001
         noiseterm <- matrix(rnorm(L*d*env.size, 0, rep(rep(noise_var, each=L), env.size)), env.size, L*d, byrow=TRUE)
       }
       else{
-        noiseterm <- matrix(rnorm(L*d*env.size, 0, par.noise$noise), env.size, L*d)
+        noiseterm <- matrix(rnorm(L*d*env.size, 0, par.noise$noise.sd), env.size, L*d)
       }
       simulated.data[env==i,] <-  matrix(rep(tmp, env.size), env.size, L*d, byrow=TRUE) + noiseterm
     }
@@ -318,7 +284,6 @@ generate.data.hidden <- function(env=rep(1,10),
                                 par.noise=par.noise,
                                 intervention=intervention,
                                 hidden=hidden,
-                                intervention.par=intervention.par,
                                 ode.solver=ode.solver,
                                 seed=NA,
                                 silent=silent)

@@ -4,20 +4,22 @@
 \alias{generate.data.targetmodel}
 \title{Target model based on predictor trajectories}
 \usage{
-generate.data.targetmodel(env = rep(1, 10), noise.var = 0.01, L = 15,
+generate.data.targetmodel(env = rep(1, 10), noise.sd = 0.01, L = 15,
   d = 7, seed = NA)
 }
 \arguments{
 \item{env}{integer vector of length n encoding to which experiment
 each repetition belongs.}
 
-\item{noise.var}{numerical value specifying the noise variance.}
+\item{noise.sd}{numerical value specifying the standard deviation
+of the noise.}
 
 \item{L}{number of time points for evaluation.}
 
 \item{d}{number of total variables (d-1 preditor variables).}
 
-\item{seed}{random seed.}
+\item{seed}{random seed. Does not work if a "Detected blow-up"
+warning shows up.}
 }
 \value{
 list consisting of the following elements
@@ -51,10 +53,6 @@ legend("topright", c("observations"),
 Pfister, N., S. Bauer, J. Peters (2018).
 Identifying Causal Structure in Large-Scale Kinetic Systems
 ArXiv e-prints (arXiv:1810.11776).
-
-Brands C. and van Boekel M. (2002).
-Kinetic modeling of reactions in heated monosaccharide-casein systems.
-Journal of agricultural and food chemistry, 50(23):6725–6739.
 }
 \seealso{
 The functions \code{\link{generate.data.maillard}} and
