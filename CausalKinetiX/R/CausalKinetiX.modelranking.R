@@ -880,10 +880,10 @@ CausalKinetiX.modelranking <- function(D,
     else if(score.type=="mean"){
       score <- mean((RSS_B-RSS_A)/RSS_A)
     }
-    else if(score.type=="mean_absolut"){
+    else if(score.type=="mean_absolute"){
       score <- mean(RSS_B)
     }
-    else if(score.type=="max_absolut"){
+    else if(score.type=="max_absolute"){
       score <- max(RSS_B)
     }
     else if(score.type=="mean.weighted"){
