@@ -871,14 +871,20 @@ CausalKinetiX.modelranking <- function(D,
       stop("Specified sample.splitting does not exist. Use none or loo.")
     }
     ## compute score
+    if(abs(RSS_A)<10^-10){
+      warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Make sure you are using score.types mean_absolut or max_absolut.")
+    }
     if(score.type=="max"){ 
       score <- max((RSS_B-RSS_A)/RSS_A)
     }
     else if(score.type=="mean"){
       score <- mean((RSS_B-RSS_A)/RSS_A)
     }
-    else if(score.type=="mean2"){
+    else if(score.type=="mean_absolut"){
       score <- mean(RSS_B)
+    }
+    else if(score.type=="max_absolut"){
+      score <- max(RSS_B)
     }
     else if(score.type=="mean.weighted"){
       score <- mean(weight.vec*(RSS_B-RSS_A)/RSS_A)
