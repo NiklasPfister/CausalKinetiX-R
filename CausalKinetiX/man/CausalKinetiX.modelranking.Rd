@@ -39,15 +39,19 @@ before fitting, \code{regression.class} (default OLS) other
 options are signed.OLS, optim, random.forest,
 \code{sample.splitting} (default "loo") either leave-one-out
 (loo) or no splitting (none), \code{score.type} (default "mean")
-specifies the type of score funtion to use,
+specifies the type of score funtion to use (note that "mean" and
+"max" are proportional scores which should be used if the noise
+variance is expected to change across experiments, if this is
+not the case "mean_absolute" and "max_absolute" are prefered as
+they also work for perfect unconstrained spline fits),
 \code{integrated.model} (default TRUE) specifies whether to fit
 the integrated or the derived model, \code{splitting.env}
 (default NA) an additonal environment vector used for scoring,
 \code{weight.vec} (default rep(1, length(env)) a weight vector
-used in the scoring, \code{set.initial} (default FALSE)
-specifies whether to fix the initial value, \code{silent}
-(default TRUE) turn of additional output, \code{show.plot}
-(default FALSE) show diagnostic plots.}
+used when scoring.type=="weighted.mean", \code{set.initial}
+(default FALSE) specifies whether to fix the initial value,
+\code{silent} (default TRUE) turn of additional output,
+\code{show.plot} (default FALSE) show diagnostic plots.}
 }
 \value{
 returns a vector with the same length as models containing

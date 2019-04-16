@@ -31,15 +31,19 @@
 ##'   options are signed.OLS, optim, random.forest,
 ##'   \code{sample.splitting} (default "loo") either leave-one-out
 ##'   (loo) or no splitting (none), \code{score.type} (default "mean")
-##'   specifies the type of score funtion to use,
+##'   specifies the type of score funtion to use (note that "mean" and
+##'   "max" are proportional scores which should be used if the noise
+##'   variance is expected to change across experiments, if this is
+##'   not the case "mean_absolute" and "max_absolute" are prefered as
+##'   they also work for perfect unconstrained spline fits),
 ##'   \code{integrated.model} (default TRUE) specifies whether to fit
 ##'   the integrated or the derived model, \code{splitting.env}
 ##'   (default NA) an additonal environment vector used for scoring,
 ##'   \code{weight.vec} (default rep(1, length(env)) a weight vector
-##'   used in the scoring, \code{set.initial} (default FALSE)
-##'   specifies whether to fix the initial value, \code{silent}
-##'   (default TRUE) turn of additional output, \code{show.plot}
-##'   (default FALSE) show diagnostic plots.
+##'   used when scoring.type=="weighted.mean", \code{set.initial}
+##'   (default FALSE) specifies whether to fix the initial value,
+##'   \code{silent} (default TRUE) turn of additional output,
+##'   \code{show.plot} (default FALSE) show diagnostic plots.
 ##' 
 ##' @return returns a vector with the same length as models containing
 ##'   the stability scores
@@ -888,32 +892,6 @@ CausalKinetiX.modelranking <- function(D,
     }
     else if(score.type=="mean.weighted"){
       score <- mean(weight.vec*(RSS_B-RSS_A)/RSS_A)
-    }
-    else if(score.type=="mean.3point"){
-      score <- mean((RSS3_B-RSS3_A)/RSS3_A)
-    }
-    else if(score.type=="second-worst"){
-      score <- sort(((RSS_B-RSS_A)/RSS_A), decreasing=TRUE)[2]
-    }
-    else if(score.type=="max-mean"){
-      if(smooth.Y){
-        score <- max((RSS_B-RSS_A)/RSS_A)
-      }
-      else{
-        uenv <- unique(env)
-        n.env <- length(uenv)
-        tmp <- vector("numeric", n.env)
-        for(i in 1:n.env){
-          tmp[i] <- mean((RSS_B[env==uenv[i]]-RSS_A[env==uenv[i]])/RSS_A[env==uenv[i]])
-        }
-        score <- max(tmp)
-      }
-    }
-    else if(score.type=="updown1"){
-      score <- max(abs(UpDown_A-UpDown_B))
-    }
-    else if(score.type=="updown2"){
-      score <- mean(abs(UpDown_A-UpDown_B))
     }
     else{
       stop("Specified score.type does not exist. Use max, mean or max-mean.")
