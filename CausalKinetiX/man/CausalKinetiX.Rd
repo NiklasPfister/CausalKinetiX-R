@@ -57,9 +57,11 @@ For further details see the references.
 \examples{
 
 ## Generate data from Maillard reaction
-simulation.obj <- generate.data.maillard(target=4,
-                                         env=rep(1:5, 5),
-                                         L=20)
+simulation.obj <- generate.data.maillard(target=6,
+                                         env=rep(1:3, 3),
+                                         L=15,
+                                         seed=5,
+                                         par.noise=list(noise.sd=1))
 
 D <- simulation.obj$simulated.data
 time <- simulation.obj$time
@@ -67,7 +69,10 @@ env <- simulation.obj$env
 target <- simulation.obj$target
 
 ## Fit data using CausalKinetiX
-ck.fit <- CausalKinetiX(D, time, env, target)
+ck.fit <- CausalKinetiX(D, time, env, target,
+                        pars=list(expsize=1))
+# variable ranking (here the true parent is variable 4)
+print(ck.fit$ranking)
 }
 \references{
 Pfister, N., S. Bauer, J. Peters (2018).

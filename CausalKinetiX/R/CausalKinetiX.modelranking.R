@@ -30,23 +30,26 @@
 ##'   before fitting, \code{regression.class} (default OLS) other
 ##'   options are signed.OLS, optim, random.forest,
 ##'   \code{sample.splitting} (default "loo") either leave-one-out
-##'   (loo) or no splitting (none), \code{score.type} (default "mean")
-##'   specifies the type of score funtion to use (note that "mean" and
-##'   "max" are proportional scores which should be used if the noise
-##'   variance is expected to change across experiments, if this is
-##'   not the case "mean_absolute" and "max_absolute" are prefered as
-##'   they also work for perfect unconstrained spline fits),
-##'   \code{integrated.model} (default TRUE) specifies whether to fit
-##'   the integrated or the derived model, \code{splitting.env}
-##'   (default NA) an additonal environment vector used for scoring,
-##'   \code{weight.vec} (default rep(1, length(env)) a weight vector
-##'   used when scoring.type=="weighted.mean", \code{set.initial}
-##'   (default FALSE) specifies whether to fix the initial value,
-##'   \code{silent} (default TRUE) turn of additional output,
-##'   \code{show.plot} (default FALSE) show diagnostic plots.
+##'   (loo) or no splitting (none), \code{score.type} (default
+##'   "mean_absolute") specifies the type of score funtion to use
+##'   (note that "mean" and "max" are proportional scores which should
+##'   be used if the noise variance is expected to change across
+##'   experiments, if this is not the case "mean_absolute" and
+##'   "max_absolute" are prefered as they also work for perfect
+##'   unconstrained spline fits), \code{integrated.model} (default
+##'   TRUE) specifies whether to fit the integrated or the derived
+##'   model, \code{splitting.env} (default NA) an additonal
+##'   environment vector used for scoring, \code{weight.vec} (default
+##'   rep(1, length(env)) a weight vector used when
+##'   scoring.type=="weighted.mean", \code{set.initial} (default
+##'   FALSE) specifies whether to fix the initial value, \code{silent}
+##'   (default TRUE) turn of additional output, \code{show.plot}
+##'   (default FALSE) show diagnostic plots.
 ##' 
 ##' @return returns a vector with the same length as models containing
 ##'   the stability scores
+##'
+##' @export
 ##' 
 ##' @import quadprog randomForest pspline
 ##' @importFrom graphics plot lines
@@ -62,8 +65,23 @@
 ##'   this function that also computes the variable ranking.
 ##'
 ##' @examples
+##' ## Generate data from Maillard reaction
+##' simulation.obj <- generate.data.maillard(target=1,
+##'                                          env=rep(1:5, 3),
+##'                                          L=20,
+##'                                          par.noise=list(noise.sd=1))
+##' D <- simulation.obj$simulated.data
+##' time <- simulation.obj$time
+##' env <- simulation.obj$env
+##' target <- simulation.obj$target
 ##'
-##' x <- 4
+##' ## Fit data to the following two models using CausalKinetiX:
+##' ## 1: dy = theta_1*x_1 + theta_2*x_2 + theta_3*x_1*x_10 (true model)
+##' ## 2: dy = theta_1*x_2 + theta_2*x_3*x_10 (wrong model)
+##' ck.fit <- CausalKinetiX.modelranking(D, time, env, target,
+##'                                      list(list(1, 2, c(1, 10)), list(2, 4, c(3, 10))))
+##' print(ck.fit)
+
 
 
 CausalKinetiX.modelranking <- function(D,
@@ -71,7 +89,7 @@ CausalKinetiX.modelranking <- function(D,
                                        env,
                                        target,
                                        models,
-                                       pars){
+                                       pars=list()){
 
   ############################
   #
@@ -108,7 +126,7 @@ CausalKinetiX.modelranking <- function(D,
     pars$sample.splitting <- "loo"
   }
   if(!exists("score.type",pars)){
-    pars$score.type <- "mean"
+    pars$score.type <- "mean_absolute"
   }
   if(!exists("integrated.model",pars)){
     pars$integrated.model <- TRUE
@@ -875,13 +893,16 @@ CausalKinetiX.modelranking <- function(D,
       stop("Specified sample.splitting does not exist. Use none or loo.")
     }
     ## compute score
-    if(abs(RSS_A)<10^-10){
-      warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Make sure you are using score.types mean_absolut or max_absolut.")
-    }
-    if(score.type=="max"){ 
+    if(score.type=="max"){
+      if(abs(RSS_A)<10^-10){
+        warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.type max_absolut.")
+      }
       score <- max((RSS_B-RSS_A)/RSS_A)
     }
     else if(score.type=="mean"){
+      if(abs(RSS_A)<10^-10){
+        warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.type mean_absolut.")
+      }
       score <- mean((RSS_B-RSS_A)/RSS_A)
     }
     else if(score.type=="mean_absolute"){
@@ -891,6 +912,9 @@ CausalKinetiX.modelranking <- function(D,
       score <- max(RSS_B)
     }
     else if(score.type=="mean.weighted"){
+      if(abs(RSS_A)<10^-10){
+        warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.types mean_absolut or max_absolute.")
+      }
       score <- mean(weight.vec*(RSS_B-RSS_A)/RSS_A)
     }
     else{

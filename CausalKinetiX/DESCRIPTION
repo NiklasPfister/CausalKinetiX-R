@@ -14,7 +14,7 @@ Authors@R: c(
            family = "Peters",
            role = c("aut"),
            email = "jonas.peters@math.ku.dk"))
-Description: Implementation of CausalKinetiX, a framework for learning stable structures in kinetic systems. Apart from the main functions CausalKinetiX() and CausalKinetiX.modelranking() it includes functions to generate data from three simulations models, which can be used to benchmark stucture learning methods for linear ODE models.
+Description: Implementation of CausalKinetiX, a framework for learning stable structures in kinetic systems. Apart from the main functions CausalKinetiX() and CausalKinetiX.modelranking() it includes functions to generate data from three simulations models, which can be used to benchmark structure learning methods for linear ODE models.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

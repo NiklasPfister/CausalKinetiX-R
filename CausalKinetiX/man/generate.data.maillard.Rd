@@ -5,7 +5,7 @@
 \title{Maillard reaction}
 \usage{
 generate.data.maillard(target, env = rep(1, 10), L = 15,
-  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, relativ =
+  par.noise = list(noise.sd = 0.01, only.target.noise = FALSE, relativ =
   FALSE), intervention = "initial_blockreactions",
   ode.solver = "lsoda", seed = NA, silent = FALSE)
 }

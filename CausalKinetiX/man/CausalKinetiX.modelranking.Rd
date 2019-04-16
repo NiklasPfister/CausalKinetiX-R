@@ -4,7 +4,7 @@
 \alias{CausalKinetiX.modelranking}
 \title{CausalKinetix.modelranking}
 \usage{
-CausalKinetiX.modelranking(D, times, env, target, models, pars)
+CausalKinetiX.modelranking(D, times, env, target, models, pars = list())
 }
 \arguments{
 \item{D}{data matrix. Should have dimension n x (L*d), where n is
@@ -38,20 +38,21 @@ to smooth data observations before fitting, \code{smooth.Y}
 before fitting, \code{regression.class} (default OLS) other
 options are signed.OLS, optim, random.forest,
 \code{sample.splitting} (default "loo") either leave-one-out
-(loo) or no splitting (none), \code{score.type} (default "mean")
-specifies the type of score funtion to use (note that "mean" and
-"max" are proportional scores which should be used if the noise
-variance is expected to change across experiments, if this is
-not the case "mean_absolute" and "max_absolute" are prefered as
-they also work for perfect unconstrained spline fits),
-\code{integrated.model} (default TRUE) specifies whether to fit
-the integrated or the derived model, \code{splitting.env}
-(default NA) an additonal environment vector used for scoring,
-\code{weight.vec} (default rep(1, length(env)) a weight vector
-used when scoring.type=="weighted.mean", \code{set.initial}
-(default FALSE) specifies whether to fix the initial value,
-\code{silent} (default TRUE) turn of additional output,
-\code{show.plot} (default FALSE) show diagnostic plots.}
+(loo) or no splitting (none), \code{score.type} (default
+"mean_absolute") specifies the type of score funtion to use
+(note that "mean" and "max" are proportional scores which should
+be used if the noise variance is expected to change across
+experiments, if this is not the case "mean_absolute" and
+"max_absolute" are prefered as they also work for perfect
+unconstrained spline fits), \code{integrated.model} (default
+TRUE) specifies whether to fit the integrated or the derived
+model, \code{splitting.env} (default NA) an additonal
+environment vector used for scoring, \code{weight.vec} (default
+rep(1, length(env)) a weight vector used when
+scoring.type=="weighted.mean", \code{set.initial} (default
+FALSE) specifies whether to fix the initial value, \code{silent}
+(default TRUE) turn of additional output, \code{show.plot}
+(default FALSE) show diagnostic plots.}
 }
 \value{
 returns a vector with the same length as models containing
@@ -66,8 +67,22 @@ This function only scores specified models and does not include a
 variable ranking.
 }
 \examples{
+## Generate data from Maillard reaction
+simulation.obj <- generate.data.maillard(target=1,
+                                         env=rep(1:5, 3),
+                                         L=20,
+                                         par.noise=list(noise.sd=1))
+D <- simulation.obj$simulated.data
+time <- simulation.obj$time
+env <- simulation.obj$env
+target <- simulation.obj$target
 
-x <- 4
+## Fit data to the following two models using CausalKinetiX:
+## 1: dy = theta_1*x_1 + theta_2*x_2 + theta_3*x_1*x_10 (true model)
+## 2: dy = theta_1*x_2 + theta_2*x_3*x_10 (wrong model)
+ck.fit <- CausalKinetiX.modelranking(D, time, env, target,
+                                     list(list(1, 2, c(1, 10)), list(2, 4, c(3, 10))))
+print(ck.fit)
 }
 \references{
 Pfister, N., S. Bauer, J. Peters (2018).
