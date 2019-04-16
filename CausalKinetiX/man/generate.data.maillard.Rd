@@ -5,8 +5,8 @@
 \title{Maillard reaction}
 \usage{
 generate.data.maillard(target, env = rep(1, 10), L = 15,
-  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, target = 1,
-  relativ = FALSE), intervention = "initial_blockreactions",
+  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, relativ =
+  FALSE), intervention = "initial_blockreactions",
   ode.solver = "lsoda", seed = NA, silent = FALSE)
 }
 \arguments{
@@ -21,9 +21,7 @@ each repetition belongs.}
 \item{par.noise}{list of parameters that specify the added
 noise. \code{noise.sd} specifies the standard deviation of
 noise, \code{only.target.noise} specifies whether to only add
-noise to target, \code{target} specifies which variable should
-be seen as target (only relevant if \code{only.target.noise} is
-TRUE) and \code{relative} specifies if the size of the noise
+noise to target and \code{relative} specifies if the size of the noise
 should be relative to size of variable (if TRUE standard
 deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).}
 

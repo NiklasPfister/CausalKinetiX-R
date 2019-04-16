@@ -11,9 +11,7 @@
 ##' @param par.noise list of parameters that specify the added
 ##'   noise. \code{noise.sd} specifies the standard deviation of
 ##'   noise, \code{only.target.noise} specifies whether to only add
-##'   noise to target, \code{target} specifies which variable should
-##'   be seen as target (only relevant if \code{only.target.noise} is
-##'   TRUE) and \code{relative} specifies if the size of the noise
+##'   noise to target and \code{relative} specifies if the size of the noise
 ##'   should be relative to size of variable (if TRUE standard
 ##'   deviation is given by par.noise$noise.sd*(x(t)-x(t-1))).
 ##' @param intervention string specifying type of
@@ -80,7 +78,6 @@ generate.data.maillard <- function(target,
                                    L=15,
                                    par.noise=list(noise.sd=0.01,
                                                   only.target.noise=TRUE,
-                                                  target=1,
                                                   relativ=FALSE),
                                    intervention="initial_blockreactions",
                                    ode.solver="lsoda",
@@ -100,9 +97,6 @@ generate.data.maillard <- function(target,
   }
   if(!exists("only.target.noise",par.noise)){
     par.noise$only.target.noise <- TRUE
-  }
-  if(!exists("target",par.noise)){
-    par.noise$target <- 1
   }
   if(!exists("relativ",par.noise)){
     par.noise$relativ <- FALSE
@@ -250,14 +244,14 @@ generate.data.maillard <- function(target,
     
     # select time points and add noise
     if(par.noise$only.target.noise){
-      target.ind <- ((par.noise$target-1)*L+1):(par.noise$target*L)
+      target.ind <- ((target-1)*L+1):(target*L)
       tmp <- simulated.model[[i]][time.index, -1, drop=FALSE]
       if(par.noise$relativ){
-        noise_var <- par.noise$noise.sd*diff(range(tmp[, par.noise$target]))+0.0000001
+        noise_var <- par.noise$noise.sd*diff(range(tmp[, target]))+0.0000001
         noiseterm <- matrix(rnorm(L*env.size, 0, noise_var), env.size, L)
       }
       else{
-        noiseterm <- matrix(rnorm(L*env.size, 0, par.noise$target), env.size, L)
+        noiseterm <- matrix(rnorm(L*env.size, 0, target), env.size, L)
       }
       simulated.data[env==i, ] <- matrix(rep(tmp, env.size), env.size, L*d, byrow=TRUE)
       simulated.data[env==i, target.ind] <- simulated.data[env==i, target.ind] + noiseterm
