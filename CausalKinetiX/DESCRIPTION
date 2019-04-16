@@ -1,5 +1,5 @@
 Package: CausalKinetiX
-Title: Identifying Causal Structure in Large-Scale Kinetic Systems
+Title: Learning Stable Structures in Kinetic Systems
 Version: 0.1
 Authors@R: c(
     person(given = "Niklas",
@@ -14,7 +14,7 @@ Authors@R: c(
            family = "Peters",
            role = c("aut"),
            email = "jonas.peters@math.ku.dk"))
-Description: What the package does (one paragraph).
+Description: This packages implements CausalKinetiX, a framework for identifying stable stucture in kinetic systems. Apart from the main functions CausalKinetiX() and CausalKinetiX.modelranking() it includes functions to generate data from three simulations models, which can be used to benchmark stucture learning methods for linear ODE models.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
