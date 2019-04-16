@@ -122,7 +122,7 @@ constrained.smoothspline <- function(y,
   make.posdef <- function(A, mineig=10^(-15)){
     aa <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
     if(min(aa) < mineig){
-      warning("Spline matrix is not (numerically) positive definite and has been adjusted.")
+      #warning("Spline matrix is not (numerically) positive definite and has been adjusted.")
       if(min(aa) < 0){
         A <- A + diag(-min(aa) + mineig, dim(A)[1])
       }
