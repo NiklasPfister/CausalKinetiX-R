@@ -30,10 +30,10 @@ spline, \code{num.folds} (default 2) number of folds used in
 cross-validation of smoothing spline, \code{include.vars}
 (default NA) specifies variables that should be included in each
 model, \code{include.intercept} (default FALSE) specifies
-whether to include a intercept in models, \code{pooling}
-(default TRUE) specifies whether to pool repetitions in each
-environment, \code{smoothing} (default TRUE) specifies whether
-to smooth data observations before fitting, \code{smooth.Y}
+whether to include a intercept in models, \code{average.reps}
+(default FALSE) specifies whether to average repetitions in each
+environment, \code{smooth.X} (default FALSE) specifies whether
+to smooth predictor observations before fitting, \code{smooth.Y}
 (default FALSE) specifies whether to smooth target observations
 before fitting, \code{regression.class} (default OLS) other
 options are signed.OLS, optim, random.forest,

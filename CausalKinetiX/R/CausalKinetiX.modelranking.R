@@ -22,10 +22,10 @@
 ##'   cross-validation of smoothing spline, \code{include.vars}
 ##'   (default NA) specifies variables that should be included in each
 ##'   model, \code{include.intercept} (default FALSE) specifies
-##'   whether to include a intercept in models, \code{pooling}
-##'   (default TRUE) specifies whether to pool repetitions in each
-##'   environment, \code{smoothing} (default TRUE) specifies whether
-##'   to smooth data observations before fitting, \code{smooth.Y}
+##'   whether to include a intercept in models, \code{average.reps}
+##'   (default FALSE) specifies whether to average repetitions in each
+##'   environment, \code{smooth.X} (default FALSE) specifies whether
+##'   to smooth predictor observations before fitting, \code{smooth.Y}
 ##'   (default FALSE) specifies whether to smooth target observations
 ##'   before fitting, \code{regression.class} (default OLS) other
 ##'   options are signed.OLS, optim, random.forest,
@@ -110,11 +110,11 @@ CausalKinetiX.modelranking <- function(D,
   if(!exists("include.intercept",pars)){
     pars$include.intercept <- FALSE
   }
-  if(!exists("pooling",pars)){
-    pars$pooling <- TRUE
+  if(!exists("average.reps",pars)){
+    pars$average.reps <- FALSE
   }
-  if(!exists("smoothing",pars)){
-    pars$smoothing <- TRUE
+  if(!exists("smooth.X",pars)){
+    pars$smooth.X <- FALSE
   }
   if(!exists("smooth.Y",pars)){
     pars$smooth.Y <- FALSE
@@ -170,13 +170,13 @@ CausalKinetiX.modelranking <- function(D,
   }
   include.vars <- pars$include.vars
   include.intercept <- pars$include.intercept
-  pooling <- pars$pooling
-  smoothing <- pars$smoothing
+  average.reps <- pars$average.reps
+  smooth.X <- pars$smooth.X
+  smooth.Y <- pars$smooth.Y
   score.type <- pars$score.type
   silent <- pars$silent
   sample.splitting <- pars$sample.splitting
   splitting.env <- pars$splitting.env
-  smooth.Y <- pars$smooth.Y
   weight.vec <- pars$weight.vec
   regression.class <- pars$regression.class
   show.plot <- pars$show.plot
@@ -194,6 +194,7 @@ CausalKinetiX.modelranking <- function(D,
   env_order <- order(env)
   D <- D[env_order,]
   splitting.env <- splitting.env[env_order]
+  env <- env[env_order]
   if(smooth.Y){
     weight.vec <- weight.vec[order(unique(env))]
   }
@@ -225,81 +226,49 @@ CausalKinetiX.modelranking <- function(D,
   }
 
   
-  ######################################
+  ##################################################
   #
-  # Step 1: Smoothing & Pooling
+  # Step 1: Average Repetitions & Smooth predictors
   #
-  #####################################
+  ##################################################
 
-  # initialize variables
+  ## Averaging
+  if(average.reps){
+    D <- apply(D, 2, function(col) sapply(split(col, env),
+                                          function(x) mean(x, na.rm=TRUE)))
+    DmatY <- apply(DmatY, 2, function(col) sapply(split(col, env),
+                                                  function(x) mean(x, na.rm=TRUE)))
+    splitting.env <- splitting.env[!duplicated(env)]
+    env <- unique(env)
+    n <- length(env)
+  }
+
+  ## Smoothing
   Dlist <- vector("list", n)
-  ## use pooling on environments
-  if(pooling){
-    ## with smoothing
-    if(smoothing){
-      unique_env <- unique(env)
-      for(i in 1:n){
-        Dlist[[i]] <- matrix(D[i,], nrow=L, ncol=dtot, byrow=FALSE)
-      }
-      # perform smoothing
-      count <- 1
-      for(i in 1:length(unique_env)){
-        times.vec <- rep(times, sum(env==unique_env[i]))
-        Dlist.vec <- do.call(rbind, Dlist[env==unique_env[i]])
-        for(j in 1:dtot){
-          na_ind <- is.na(Dlist.vec[,j])
-          fit <- sm.spline(times.vec[!na_ind], Dlist.vec[!na_ind,j], norder=2, cv=TRUE)
-          for(k in 1:sum(env==unique_env[i])){
-            Dlist[[count+k-1]][,j] <- predict(fit, times, nderiv=0)
-          }
-        }
-        count <- count + sum(env==unique_env[i])
-      }
-    }
-    ## without smoothing
-    else{
-      unique_env <- unique(env)
-      Dlist <- vector("list", n)
-      count <- 1
-      for(i in 1:length(unique_env)){
-        tmpD <- matrix(apply(D[env==unique_env[i],,drop=FALSE], 2, median),
-                       nrow=L, ncol=dtot, byrow=FALSE)
-        for(j in 1:sum(unique_env[i]==env)){
-          Dlist[[count]] <- tmpD
-          count <- count+1
-        }
+  if(smooth.X){
+    for(i in 1:n){
+      Dlist[[i]] <- matrix(D[i,], nrow=L, ncol=dtot, byrow=FALSE)
+      # smooth X-values
+      for(j in 1:dtot){
+        na_ind <- is.na(Dlist[[i]][,j])
+        fit <- sm.spline(times[!na_ind], Dlist[[i]][!na_ind,j], norder=2, cv=TRUE)
+        Dlist[[i]][,j] <- predict(fit, times, nderiv=0)
       }
     }
   }
-  ## don't use pooling on environments
   else{
-    ## with smoothing
-    if(smoothing){
-      for(i in 1:n){
-        Dlist[[i]] <- matrix(D[i,], nrow=L, ncol=dtot, byrow=FALSE)
-        # smooth X-values
-        for(j in 1:dtot){
-          na_ind <- is.na(Dlist[[i]][,j])
-          fit <- sm.spline(times[!na_ind], Dlist[[i]][!na_ind,j], norder=2, cv=TRUE)
-          Dlist[[i]][,j] <- predict(fit, times, nderiv=0)
-        }
-      }
-    }
-    ## without smoothing
-    else{
-      for(i in 1:n){
-        Dlist[[i]] <- matrix(D[i,], nrow=L, ncol=dtot, byrow=FALSE)
-        }
+    for(i in 1:n){
+      Dlist[[i]] <- matrix(D[i,], nrow=L, ncol=dtot, byrow=FALSE)
     }
   }
-  
+
   ######################################
   #
   # Step 2: Fit reference model
   #
   #####################################
   
-  if(pars$smooth.Y){
+  if(smooth.Y){
     # initialize variables
     unique_env <- unique(env)
     num_env <- length(unique_env)
@@ -692,8 +661,8 @@ CausalKinetiX.modelranking <- function(D,
               lines(times_new, Yb[[i]], col="blue")
               lines(times_new, constrained_fit[[i]], col="green")
             }
+            readline("Press enter")
           }
-          readline("Press enter")
         }
       }
     }
@@ -860,7 +829,6 @@ CausalKinetiX.modelranking <- function(D,
             plot(times1, Y1plot, xlab="times", ylab="concentration",
                  ylim = c(miny, maxy))
             which_ind <- which(env_ind)
-            print(str(Ya))
             for(k in which_ind){
               lines(times_new, Ya[[k]], col="red")
               lines(times_new, Yb[[k]], col="blue")
@@ -870,22 +838,22 @@ CausalKinetiX.modelranking <- function(D,
           }
         }
         else{
-          env_ind <- splitting.env == unique_env[i]
-          times1 <- rep(times, each=sum(env_ind))
-          L <- length(times)
-          miny <- min(c(Ylist[[i]], Ya[[i]],
-                        Yb[[i]], constrained_fit[[i]]))
-          maxy <- max(c(Ylist[[i]], Ya[[i]],
-                        Yb[[i]], constrained_fit[[i]]))
-          # plot
-          plot(times1, Ylist[[i]], xlab="times", ylab="concentration",
-               ylim = c(miny, maxy))
-          for(k in 1:sum(env_ind)){
+          for(i in 1:num.env){
+            env_ind <- splitting.env == unique_env[i]
+            times1 <- rep(times, each=sum(env_ind))
+            L <- length(times)
+            miny <- min(c(Ylist[[i]], Ya[[i]],
+                          Yb[[i]], constrained_fit[[i]]))
+            maxy <- max(c(Ylist[[i]], Ya[[i]],
+                          Yb[[i]], constrained_fit[[i]]))
+            # plot
+            plot(times1, Ylist[[i]], xlab="times", ylab="concentration",
+                 ylim = c(miny, maxy))
             lines(times_new, Ya[[i]], col="red")
             lines(times_new, Yb[[i]], col="blue")
             lines(times_new, constrained_fit[[i]], col="green")
+            readline("Press enter")
           }
-          readline("Press enter")
         }
       }
     }
