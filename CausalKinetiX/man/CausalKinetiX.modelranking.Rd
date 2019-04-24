@@ -31,8 +31,8 @@ cross-validation of smoothing spline, \code{include.vars}
 (default NA) specifies variables that should be included in each
 model, \code{include.intercept} (default FALSE) specifies
 whether to include a intercept in models, \code{pooling}
-(default FALSE) specifies whether to pool repetitions in each
-environment, \code{smoothing} (default FALSE) specifies whether
+(default TRUE) specifies whether to pool repetitions in each
+environment, \code{smoothing} (default TRUE) specifies whether
 to smooth data observations before fitting, \code{smooth.Y}
 (default FALSE) specifies whether to smooth target observations
 before fitting, \code{regression.class} (default OLS) other
