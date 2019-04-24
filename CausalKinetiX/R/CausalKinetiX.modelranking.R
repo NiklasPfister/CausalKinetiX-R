@@ -1,8 +1,8 @@
 ##' Applies CausalKinetiX framework to rank a list models according to
 ##' their stability.
 ##'
-##' This function only scores specified models and does not include a
-##' variable ranking.
+##' This function scores a specified list of models and does not
+##' include a variable ranking.
 ##' @title CausalKinetix.modelranking
 ##' @param D data matrix. Should have dimension n x (L*d), where n is
 ##'   the number of repetitions (over all experiments), L is the
@@ -62,7 +62,8 @@
 ##' ArXiv e-prints (arXiv:1810.11776).
 ##'
 ##' @seealso The function \code{\link{CausalKinetiX}} is a wrapper for
-##'   this function that also computes the variable ranking.
+##'   this function that also computes the variable ranking and
+##'   generates sensible classes of models.
 ##'
 ##' @examples
 ##' ## Generate data from Maillard reaction

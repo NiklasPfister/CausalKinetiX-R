@@ -23,8 +23,9 @@
 ##'   \code{include.vars} (default NA) specifies variables that should
 ##'   be included in each model, \code{maineffect.models} (default
 ##'   FALSE) main-effect models or exhaustive models, \code{screening}
-##'   (default NA) specifies how many variables to screen down,
-##'   \code{K} (default NA) cutoff paramter used in variable ranking.
+##'   (default NA) specifies the number of terms remaining after
+##'   screening - NA implies screening, \code{K} (default NA) cutoff
+##'   parameter used in variable ranking.
 ##'
 ##'   Additionally all parameters used in CausalKinetiX.modelranking
 ##'   can also be specified here.
@@ -179,9 +180,10 @@ CausalKinetiX <- function(D,
   scores <- (var_pvals)[idx]
 
   # output results
-  return(list(models=models,
+  res <- list(models=models,
               model.scores=model.scores,
               variable.scores=scores,
-              ranking=ranking))
-  
+              ranking=ranking)
+  class(res) <- "CausalKinetiX"
+  return(res)
 }

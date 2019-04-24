@@ -63,8 +63,8 @@ Applies CausalKinetiX framework to rank a list models according to
 their stability.
 }
 \details{
-This function only scores specified models and does not include a
-variable ranking.
+This function scores a specified list of models and does not
+include a variable ranking.
 }
 \examples{
 ## Generate data from Maillard reaction
@@ -91,7 +91,8 @@ ArXiv e-prints (arXiv:1810.11776).
 }
 \seealso{
 The function \code{\link{CausalKinetiX}} is a wrapper for
-  this function that also computes the variable ranking.
+  this function that also computes the variable ranking and
+  generates sensible classes of models.
 }
 \author{
 Niklas Pfister, Stefan Bauer and Jonas Peters
