@@ -1,6 +1,6 @@
 Package: CausalKinetiX
 Title: Learning Stable Structures in Kinetic Systems
-Version: 0.1
+Version: 0.2
 Authors@R: c(
     person(given = "Niklas",
            family = "Pfister",

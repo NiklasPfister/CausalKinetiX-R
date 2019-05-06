@@ -150,8 +150,6 @@ generate.data.hidden <- function(env=rep(1,10),
   theta_obs <- c(0.8, 0.8, 0.1, 1, 0.03, 0.6, 1, 0.2, 0.5)*0.1
   n.env <- length(unique(env))
   
-  fixed_reactions <- c(4, 5, 7)
-  
   true_set <- c(list(3))
  
   ###
@@ -160,7 +158,7 @@ generate.data.hidden <- function(env=rep(1,10),
   
   if(intervention == "initial"){
     intervention_fun <- function(){
-      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0)
+      initial_int <- c(runif(1, 0, 10), 0, 0, runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0, 0)
       return(list(initial=initial_int,
                   theta=theta_obs))
     }
@@ -174,8 +172,6 @@ generate.data.hidden <- function(env=rep(1,10),
       theta_int <- theta_obs
       theta_int[r_vec] <- theta_int[r_vec]*rbinom(num_reactions, 1, 1-1/num_reactions)
       theta_int[7] <- max(c(theta_obs[7] + runif(1, -intervention.par, intervention.par),0))
-      initial_int <- c(runif(1, 0, 10), 0, 0,
-                       runif(1, 0, 10), runif(1, 0, 10), 0, 0, 0, 0)
       return(list(initial=initial_obs,
                   theta=theta_int))
     }
