@@ -78,7 +78,7 @@
 ##'
 ##' ## Fit data to the following two models using CausalKinetiX:
 ##' ## 1: dy = theta_1*x_1 + theta_2*x_2 + theta_3*x_1*x_10 (true model)
-##' ## 2: dy = theta_1*x_2 + theta_2*x_3*x_10 (wrong model)
+##' ## 2: dy = theta_1*x_2 + theta_2*x_4 + theta_3*x_3*x_10 (wrong model)
 ##' ck.fit <- CausalKinetiX.modelranking(D, time, env, target,
 ##'                                      list(list(1, 2, c(1, 10)), list(2, 4, c(3, 10))))
 ##' print(ck.fit)
