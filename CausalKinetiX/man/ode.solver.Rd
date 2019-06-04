@@ -5,8 +5,8 @@
 \title{ode.solver}
 \usage{
 ode.solver(time_vec, initial_value, times, X, model, target, coefs,
-  included.vars = 1:ncol(X), smooth.type = "smoothing.spline",
-  reltol = 10^(-10), abstol = 10^(-16))
+  smooth.type = "smoothing.spline", reltol = 10^(-10),
+  abstol = 10^(-16))
 }
 \arguments{
 \item{time_vec}{numeric vector. Specifices the points at which to
@@ -30,10 +30,6 @@ to a single term in the mass-action equation.}
 
 \item{coefs}{numeric vector. Specifies the parameter values for
 each term in \code{model}.}
-
-\item{included.vars}{vector of variables 1 to d. Can be used in
-order to save computational costs if not all variables given in
-\code{X} actually show up in \code{model}.}
 
 \item{smooth.type}{string. Specifies which type of smoothing to
 use. The following options exist: "smoothing.spline", "loess",

@@ -13,7 +13,8 @@
 ##' @param target integer specifing which variable is the target.
 ##' @param models list of models. Each model is specified by a list of
 ##'   vectors specifiying the variables included in the interactions
-##'   of each term.
+##'   of each term. If NA, then models are constructed automatically
+##'   using the parameters in pars.
 ##' @param pars list of the following parameters: \code{max.preds}
 ##'   (default FALSE) if TRUE also models with lower terms included,
 ##'   \code{expsize} (default 2) the expected number of terms,
@@ -108,6 +109,9 @@ CausalKinetiX <- function(D,
   if(!exists("K",pars)){
     pars$K <- NA
   }
+  if(!exists("silent",pars)){
+    pars$silent <- TRUE
+  }
 
   
   if(exists("regression.class", pars)){
@@ -132,7 +136,10 @@ CausalKinetiX <- function(D,
   d <- NCOL(D)/L  
 
   # Check whether a list of models was specified else generate models
-  if(is.na(models)){
+  if(is.na(models[1])){
+    if(!pars$silent){
+      print("Started constructing models...")
+    }
     constructed_mods <- construct_models(D, L, d, n, target, times,
                                          pars$maineffect.models,
                                          pars$screening,
@@ -146,6 +153,9 @@ CausalKinetiX <- function(D,
     if(is.na(pars$K)){
       pars$K <- constructed_mods$num_terms-pars$expsize
     }
+    if(!pars$silent){
+      print("Models are constructed.")
+    }
   }
 
   # check whether parameter K was specified
@@ -158,7 +168,7 @@ CausalKinetiX <- function(D,
   # Compute model scores
   ###
   
-  model.scores <- CausalKinetiX.modelranking(D, times, env, target, models, pars)
+  model.scores <- CausalKinetiX.modelranking(D, times, env, target, models, pars)$scores
 
   ###
   # Rank variables

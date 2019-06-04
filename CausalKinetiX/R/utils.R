@@ -23,6 +23,9 @@ ode_integratedlasso_rank_vars <- function(D,
   if(!exists("signed",pars)){
     pars$signed <- FALSE
   }
+  if(!exists("lasso.set.size",pars)){
+    pars$lasso.set.size <- NA
+  }
   
   L <- length(times)
   d <- ncol(D)/L
@@ -76,10 +79,24 @@ ode_integratedlasso_rank_vars <- function(D,
       fit <- glmnet(Xint, deltaY)
       sel.matrix <- (fit$beta != 0)
     }
-    first.entrance <- apply(sel.matrix, MARGIN = 1, FUN = which.max)
+    first.entrance <- apply(sel.matrix, 1, which.max)
     # find all rows without ones and set first entrance to Inf
-    first.entrance[which(apply(sel.matrix, MARGIN = 1, FUN = sum) == 0)] <- Inf
+    first.entrance[which(apply(sel.matrix, 1, sum) == 0)] <- Inf
     ranking <- order(first.entrance)
+    if(!is.na(pars$lasso.set.size)){
+      tmp <- as.numeric(apply(sel.matrix, 2, sum))
+      ind <- which(tmp>=pars$lasso.set.size)
+      if(length(ind) == 0){
+        ind <- length(tmp)
+      }
+      else if(length(ind) > 1){
+        ind <- ind[1]
+      }
+      selected_vars <- which(as.matrix(sel.matrix)[,ind])
+      ranking <- rep(Inf, nrow(sel.matrix))
+      ranking[selected_vars] <- 0
+      ranking <- order(ranking)
+    }
   }
 
   if(pars$rm.target){
@@ -116,8 +133,20 @@ construct_models <- function(D, L, d, n, target, times,
                                            env=env,
                                            target, list(interactions=FALSE,
                                                         rm.target=FALSE,
-                                                        signed=signed))$ranking
-      keep_terms <- ordering[res[1:screening]]
+                                                        lasso.set.size=NA,
+                                                        signed=FALSE))$ranking
+      signed <- FALSE
+      if(signed){
+        sign_index <- sapply(ordering, function(x) x[1] == target)
+        ordered_sign <- sign_index[res]
+        min_terms <- apply(cbind(cumsum(ordered_sign), cumsum(!ordered_sign)), 1, min)
+        index <- which.min(min_terms<ceiling(screening/2))
+        keep_terms <- c(ordering[res[1:index]][ordered_sign[1:index]][1:ceiling(screening/2)],
+                        ordering[res[1:index]][!ordered_sign[1:index]][1:ceiling(screening/2)])
+      }
+      else{
+        keep_terms <- ordering[res[1:screening]]
+      }
       ## print(keep_terms)
       num_terms <- screening
     }
@@ -161,8 +190,11 @@ construct_models <- function(D, L, d, n, target, times,
     }
   }
   else{
-    if(!is.na(include.vars)){
-      warning("include.vars is not defined for maineffects.models==FALSE")
+    if(!is.na(include.vars[1])){
+      warning("include.vars is not defined for maineffects.models==TRUE")
+    }
+    if(!is.na(screening)){
+      warning("screening is not implemented for maineffects.models==TRUE")
     }
     ## Construct models
     if(max_preds){

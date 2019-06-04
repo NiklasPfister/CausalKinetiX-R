@@ -22,7 +22,8 @@ each repetition belongs.}
 
 \item{models}{list of models. Each model is specified by a list of
 vectors specifiying the variables included in the interactions
-of each term.}
+of each term. If NA, then models are constructed automatically
+using the parameters in pars.}
 
 \item{pars}{list of the following parameters: \code{max.preds}
   (default FALSE) if TRUE also models with lower terms included,

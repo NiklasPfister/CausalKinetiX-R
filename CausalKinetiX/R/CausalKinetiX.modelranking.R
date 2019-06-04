@@ -153,16 +153,30 @@ CausalKinetiX.modelranking <- function(D,
     stop("If smooth.Y is TRUE, splitting.env needs to be NA.")
   }
 
+  print(pars$regression.class)
   
   ############################
   #
   # initialize
   #
   ############################
+
+  # remove all variables not involved in any models
+  unique_vars <- unique(c(unlist(lapply(models, unlist)), target, pars$include.vars))
+  unique_vars <- sort(unique_vars[!is.na(unique_vars)])
+  L <- length(times)
+  matching_perm <- order(c(unique_vars, setdiff(1:(ncol(D)/L), unique_vars)))
+  target <- matching_perm[target]
+  models <- lapply(models, function(x) lapply(x, function(y) matching_perm[y]))
+  keep_ind <- do.call(c, lapply(unique_vars, function(i) ((i-1)*L+1):(i*L)))
+  D <- D[,keep_ind]
+  if(!is.na(pars$include.vars)[1]){
+    pars$include.vars <- matching_perm[pars$include.vars]
+  }
   
   # read out parameters (as in paper)
-  n <- nrow(D)
   L <- length(times)
+  n <- nrow(D)
   d <- ncol(D)/L
   num.folds <- pars$num.folds
   pen.degree <- pars$pen.degree
@@ -225,7 +239,6 @@ CausalKinetiX.modelranking <- function(D,
     dtot <- d
     ordering <- as.list(1:d)
   }
-
   
   ##################################################
   #
@@ -475,6 +488,7 @@ CausalKinetiX.modelranking <- function(D,
   
   # Iterate over all models and compute score
   scores <- vector("numeric", num.models)
+  parameters <- vector("list", num.models)
   for(model in 1:num.models){
     Xlist <- data_list[[model]]
     Xlist2 <- data_list2[[model]]
@@ -518,6 +532,7 @@ CausalKinetiX.modelranking <- function(D,
         coefs <- coefficients(fit)
         coefs[is.na(coefs)] <- 0
         fitted_dY <- Xpred %*% matrix(coefs, ncol(Xpred), 1)
+        parameters[[model]] <- coefs
       }
       # OLS regression with sign constraints on parameters
       else if(regression.class=="signed.OLS"){
@@ -533,6 +548,7 @@ CausalKinetiX.modelranking <- function(D,
         fit <- solve.QP(Dmat, dvec, Amat, bvec, meq=0)
         coefs <- fit$solution
         fitted_dY <- Xpred %*% matrix(coefs, ncol(Xpred), 1)
+        parameters[[model]] <- coefs
       }
       # OLS regression with pruning based on score
       else if(regression.class=="optim"){
@@ -562,11 +578,13 @@ CausalKinetiX.modelranking <- function(D,
                          lower=-10, upper=5)
         coefs <- (10^opt.res$par)*ind
         fitted_dY <- Xpred %*% matrix(coefs, ncol(Xpred), 1)
+        parameters[[model]] <- coefs
       }
       # Random forest regression
       else if(regression.class=="random.forest"){
         fit <- randomForest(y ~ ., data=cbind(as.data.frame(X), data.frame(y=dY)))
         fitted_dY <- predict(fit, newdata=as.data.frame(Xpred))
+        parameters[[model]] <- fit
       }
       # Wrong regression.class
       else{
@@ -886,6 +904,10 @@ CausalKinetiX.modelranking <- function(D,
       }
       score <- mean(weight.vec*(RSS_B-RSS_A)/RSS_A)
     }
+    else if(score.type=="stability"){
+      pairs <- combn(1:length(RSS_B), 2)
+      score <- max(apply(pairs, 2, function(x) abs(RSS_B[x[1]]-RSS_B[x[2]])))
+    }
     else{
       stop("Specified score.type does not exist. Use max, mean or max-mean.")
     }
@@ -897,6 +919,7 @@ CausalKinetiX.modelranking <- function(D,
   }
 
   ## Return results
-  return(scores)
+  return(list(scores=scores,
+              parameters=parameters))
 
 }

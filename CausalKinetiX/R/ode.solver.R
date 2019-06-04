@@ -18,9 +18,6 @@
 ##' @param target integer specifing which variable is the target.
 ##' @param coefs numeric vector. Specifies the parameter values for
 ##'   each term in \code{model}.
-##' @param included.vars vector of variables 1 to d. Can be used in
-##'   order to save computational costs if not all variables given in
-##'   \code{X} actually show up in \code{model}.
 ##' @param smooth.type string. Specifies which type of smoothing to
 ##'   use. The following options exist: "smoothing.spline", "loess",
 ##'   "linear", "constant".
@@ -61,9 +58,11 @@
 
 
 ode.solver <- function(time_vec, initial_value, times, X, model,
-                       target, coefs, included.vars=1:ncol(X),
-                       smooth.type="smoothing.spline",
+                       target, coefs, smooth.type="smoothing.spline",
                        reltol=10^(-10), abstol=10^(-16)){
+
+  ## Remove all variables not contained in model
+  included.vars <- sort(unique(unlist(model)))
 
   ## Fit spline on each predictor
   if(smooth.type == "smoothing.spline"){
@@ -84,6 +83,23 @@ ode.solver <- function(time_vec, initial_value, times, X, model,
   }
 
   ## Construct RHS
+  ## odefun <- function(t, y, par){
+  ##   deriv <- 0
+  ##   for(term in 1:length(model)){
+  ##     tmp <- 1
+  ##     for(var in model[[term]]){
+  ##       if(var == target){
+  ##         tmp <- tmp*y
+  ##       }
+  ##       else{
+  ##         tmp <- tmp*splinefun[[which(var == included.vars)]](t)
+  ##       }
+  ##     }
+  ##     deriv <- deriv + par[term]*tmp
+  ##   }
+  ##   return(deriv)
+  ## }
+  par <- coefs
   odefun <- function(t, y){
     deriv <- 0
     for(term in 1:length(model)){
@@ -96,13 +112,16 @@ ode.solver <- function(time_vec, initial_value, times, X, model,
           tmp <- tmp*splinefun[[which(var == included.vars)]](t)
         }
       }
-      deriv <- deriv + coefs[term]*tmp
+      deriv <- deriv + par[term]*tmp
     }
     return(deriv)
   }
+  
 
   ## Solve ODE
+  ## odefit <- cvode(time_vec, initial_value, odefun, coefs, reltol, abstol)
   odefit <- cvode(time_vec, initial_value, odefun, reltol, abstol)
 
+  
   return(odefit)
 }
