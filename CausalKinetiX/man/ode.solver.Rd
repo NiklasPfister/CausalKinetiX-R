@@ -52,14 +52,14 @@ For further details see the references.
 \examples{
 
 ## Generate data from Maillard reaction
-simulation.obj <- generate.data.maillard(target=4,
+simulation.obj <- generate.data.maillard(target=11,
                                          env=rep(1:5, each=5),
-                                         L=20)
-
+                                         L=20,
+                                         par.noise=list(noise.sd=0.1,
+                                                        only.target.noise=FALSE,
+                                                        relativ=TRUE))
 D <- simulation.obj$simulated.data
 time <- simulation.obj$time
-env <- simulation.obj$env
-target <- simulation.obj$target
 
 ## Solve for Melanoidin
 X <- do.call(cbind, split(as.vector(t(D[1:5,])), rep(1:11, each=length(unique(time)))))

@@ -46,8 +46,7 @@
 ##'   (default TRUE) turn of additional output, \code{show.plot}
 ##'   (default FALSE) show diagnostic plots.
 ##' 
-##' @return returns a vector with the same length as models containing
-##'   the stability scores
+##' @return returns a list with the entries "scores" and "parameter"
 ##'
 ##' @export
 ##' 
@@ -81,7 +80,7 @@
 ##' ## 2: dy = theta_1*x_2 + theta_2*x_4 + theta_3*x_3*x_10 (wrong model)
 ##' ck.fit <- CausalKinetiX.modelranking(D, time, env, target,
 ##'                                      list(list(1, 2, c(1, 10)), list(2, 4, c(3, 10))))
-##' print(ck.fit)
+##' print(ck.fit$scores)
 
 
 

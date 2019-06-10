@@ -55,8 +55,7 @@ FALSE) specifies whether to fix the initial value, \code{silent}
 (default FALSE) show diagnostic plots.}
 }
 \value{
-returns a vector with the same length as models containing
-  the stability scores
+returns a list with the entries "scores" and "parameter"
 }
 \description{
 Applies CausalKinetiX framework to rank a list models according to
@@ -82,7 +81,7 @@ target <- simulation.obj$target
 ## 2: dy = theta_1*x_2 + theta_2*x_4 + theta_3*x_3*x_10 (wrong model)
 ck.fit <- CausalKinetiX.modelranking(D, time, env, target,
                                      list(list(1, 2, c(1, 10)), list(2, 4, c(3, 10))))
-print(ck.fit)
+print(ck.fit$scores)
 }
 \references{
 Pfister, N., S. Bauer, J. Peters (2018).
