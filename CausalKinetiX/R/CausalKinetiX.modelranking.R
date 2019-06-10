@@ -197,9 +197,10 @@ CausalKinetiX.modelranking <- function(D,
   show.plot <- pars$show.plot
 
   # check whether to include products and interactions
-  products <- sum(sapply(models, function(model)
+  non_zero_mod <- sapply(models, function(x) length(x)>0)
+  products <- sum(sapply(models[non_zero_mod], function(model)
     sum(sapply(model, function(term) length(term) > length(unique(term)))) > 0)) > 0
-  interactions <- sum(sapply(models, function(model)
+  interactions <- sum(sapply(models[non_zero_mod], function(model)
     sum(sapply(model, function(term) length(unique(term)) > 1)) > 0)) > 0
 
   # sort environments to increasing order
@@ -536,8 +537,8 @@ CausalKinetiX.modelranking <- function(D,
       }
       # OLS regression with sign constraints on parameters
       else if(regression.class=="signed.OLS"){
-        len_model <- length(modelstot[model][[1]])
-        tmp <- sapply(modelstot[model][[1]], function(x) x[1])
+        len_model <- length(modelstot[[model]])
+        tmp <- sapply(modelstot[[model]], function(x) x[1])
         ind <- rep(1, len_model)
         ind[tmp==target] <- -1
         # define quadProg parameters
@@ -545,7 +546,8 @@ CausalKinetiX.modelranking <- function(D,
         Amat <- diag(ind)
         dvec <- matrix(dY, 1, nrow(X)) %*% X
         Dmat <- (t(X) %*% X)
-        fit <- solve.QP(Dmat, dvec, Amat, bvec, meq=0)
+        sc <- norm(Dmat,"2")
+        fit <- solve.QP(Dmat/sc, dvec/sc, Amat, bvec, meq=0)
         coefs <- fit$solution
         fitted_dY <- Xpred %*% matrix(coefs, ncol(Xpred), 1)
         parameters[[model]] <- coefs
@@ -559,15 +561,16 @@ CausalKinetiX.modelranking <- function(D,
           return(max(sapply(split(tmp_vec, env_vec), mean)))
         }
         # compute starting value using quadratic program
-        len_model <- length(modelstot[model][[1]])
-        tmp <- sapply(modelstot[model][[1]], function(x) x[1])
+        len_model <- length(modelstot[[model]])
+        tmp <- sapply(modelstot[[model]], function(x) x[1])
         ind <- rep(1, len_model)
         ind[tmp==target] <- -1
         bvec <- rep(10^(-10), len_model)
         Amat <- diag(ind)
         dvec <- matrix(dY, 1, nrow(X)) %*% X
         Dmat <- (t(X) %*% X)
-        fit <- solve.QP(Dmat, dvec, Amat, bvec, meq=0)
+        sc <- norm(Dmat,"2")
+        fit <- solve.QP(Dmat/sc, dvec/sc, Amat, bvec, meq=0)
         coefs <- fit$solution
         # perform optimization
         opt.res <- optim(log(coefs*ind)/log(10), loss_fun,
@@ -588,7 +591,7 @@ CausalKinetiX.modelranking <- function(D,
       }
       # Wrong regression.class
       else{
-        stop("Specified regression.class does not exist. Use OLS, OLS.prune or random.forest.")
+        stop("Specified regression.class does not exist. Use OLS, signed.OLS, optim or random.forest.")
       }
       # compute score using splitting environment
       if(!smooth.Y){
@@ -712,6 +715,7 @@ CausalKinetiX.modelranking <- function(D,
         maxyplot <- vector("numeric", length(RSS_A))
         constrained_fit <- vector("list", length(RSS_A))
       }
+      parameters[[model]] <- vector("list", num.env)
       for(i in 1:num.env){
         # compute derivative constraint using OLS
         dYout <- dY[loo.ind!=unique_env[i]]
@@ -733,21 +737,29 @@ CausalKinetiX.modelranking <- function(D,
           coefs <- coefficients(fit)
           coefs[is.na(coefs)] <- 0
           fitted_dY <- Xin %*% matrix(coefs, ncol(Xin), 1)
+          parameters[[model]][[i]] <- coefs
         }
         # OLS regression with sign constraints on parameters
         else if(regression.class=="signed.OLS"){
-          len_model <- length(modelstot[model][[1]])
-          tmp <- sapply(modelstot[model][[1]], function(x) x[1])
+          len_model <- length(modelstot[[model]])
+          tmp <- sapply(modelstot[[model]], function(x) x[1])
           ind <- rep(1, len_model)
           ind[tmp==target] <- -1
           # define quadProg parameters
           bvec <- rep(0, len_model)
-          Amat <- diag(ind)
+          if(length(ind)==1){
+            Amat <- as.matrix(ind)
+          }
+          else{
+            Amat <- diag(ind)
+          }
           dvec <- matrix(dYout_nona, 1, nrow(Xout_nona)) %*% Xout_nona
           Dmat <- (t(Xout_nona) %*% Xout_nona)
-          fit <- solve.QP(Dmat, dvec, Amat, bvec, meq=0)
+          sc <- norm(Dmat,"2")
+          fit <- solve.QP(Dmat/sc, dvec/sc, Amat, bvec, meq=0)
           coefs <- fit$solution
           fitted_dY <- Xin %*% matrix(coefs, ncol(Xin), 1)
+          parameters[[model]][[i]] <- coefs
         }
         # OLS regression with pruning based on score
         else if(regression.class=="optim"){
@@ -758,15 +770,16 @@ CausalKinetiX.modelranking <- function(D,
             return(mean(sapply(split(tmp_vec, env_vec), mean)))
           }
           # compute starting value using quadratic program
-          len_model <- length(modelstot[model][[1]])
-          tmp <- sapply(modelstot[model][[1]], function(x) x[1])
+          len_model <- length(modelstot[[model]])
+          tmp <- sapply(modelstot[[model]], function(x) x[1])
           ind <- rep(1, len_model)
           ind[tmp==target] <- -1
           bvec <- rep(10^(-10), len_model)
           Amat <- diag(ind)
           dvec <- matrix(dYout_nona, 1, nrow(Xout_nona)) %*% Xout_nona
           Dmat <- (t(Xout_nona) %*% Xout_nona)
-          fit <- solve.QP(Dmat, dvec, Amat, bvec, meq=0)
+          sc <- norm(Dmat,"2")
+          fit <- solve.QP(Dmat/sc, dvec/sc, Amat, bvec, meq=0)
           coefs <- fit$solution
           # perform optimization
           opt.res <- optim(log(coefs*ind)/log(10), loss_fun,
@@ -777,15 +790,17 @@ CausalKinetiX.modelranking <- function(D,
                            lower=-10, upper=5)
           coefs <- (10^opt.res$par)*ind
           fitted_dY <- Xin %*% matrix(coefs, ncol(Xin), 1)
+          parameters[[model]][[i]] <- coefs
         }
         # Random forest regression
         else if(regression.class=="random.forest"){
           fit <- randomForest(y ~ ., data=cbind(as.data.frame(Xout_nona), data.frame(y=dYout_nona)))
           fitted_dY <- predict(fit, newdata=as.data.frame(Xin))
+          parameters[[model]][[i]] <- fit
         }
         # Wrong regression.class
         else{
-          stop("Specified regression.class does not exist. Use OLS, OLS.prune or random.forest.")
+          stop("Specified regression.class does not exist. Use OLS, signed.OLS, optim or random.forest.")
         }
         
         # Fit individual models with derivative constraint
@@ -881,13 +896,13 @@ CausalKinetiX.modelranking <- function(D,
     }
     ## compute score
     if(score.type=="max"){
-      if(abs(RSS_A)<10^-10){
+      if(min(abs(RSS_A))<10^-10){
         warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.type max_absolut.")
       }
       score <- max((RSS_B-RSS_A)/RSS_A)
     }
     else if(score.type=="mean"){
-      if(abs(RSS_A)<10^-10){
+      if(min(abs(RSS_A))<10^-10){
         warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.type mean_absolut.")
       }
       score <- mean((RSS_B-RSS_A)/RSS_A)
@@ -899,7 +914,7 @@ CausalKinetiX.modelranking <- function(D,
       score <- max(RSS_B)
     }
     else if(score.type=="mean.weighted"){
-      if(abs(RSS_A)<10^-10){
+      if(min(abs(RSS_A))<10^-10){
         warning("RSS of unconstrained smoother is very small (<10^-10). Using a relative score will lead to wrong results. Consider using the score.types mean_absolut or max_absolute.")
       }
       score <- mean(weight.vec*(RSS_B-RSS_A)/RSS_A)

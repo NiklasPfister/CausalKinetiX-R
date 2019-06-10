@@ -82,7 +82,16 @@ ode_integratedlasso_rank_vars <- function(D,
     first.entrance <- apply(sel.matrix, 1, which.max)
     # find all rows without ones and set first entrance to Inf
     first.entrance[which(apply(sel.matrix, 1, sum) == 0)] <- Inf
+    ### TMP #####
+    inf_ind <- first.entrance == Inf
+    max_lasso <- max(first.entrance[!inf_ind])
+    first.entrance[inf_ind] <- max_lasso+5-abs(cor(deltaY, Xint))
+    #############
     ranking <- order(first.entrance)
+    ## ## #### TMP ######
+    ## ranking <- order(abs(cor(deltaY, Xint)), decreasing=TRUE)
+    ##  plot(sort(abs(cor(deltaY, Xint)), decreasing=TRUE))
+    ## ## ##############
     if(!is.na(pars$lasso.set.size)){
       tmp <- as.numeric(apply(sel.matrix, 2, sum))
       ind <- which(tmp>=pars$lasso.set.size)
@@ -135,7 +144,7 @@ construct_models <- function(D, L, d, n, target, times,
                                                         rm.target=FALSE,
                                                         lasso.set.size=NA,
                                                         signed=FALSE))$ranking
-      signed <- FALSE
+      signed <- TRUE
       if(signed){
         sign_index <- sapply(ordering, function(x) x[1] == target)
         ordered_sign <- sign_index[res]
