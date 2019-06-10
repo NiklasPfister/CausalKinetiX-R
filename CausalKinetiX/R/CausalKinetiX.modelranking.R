@@ -151,8 +151,6 @@ CausalKinetiX.modelranking <- function(D,
   if(pars$smooth.Y & !is.na(pars$splitting.env)){
     stop("If smooth.Y is TRUE, splitting.env needs to be NA.")
   }
-
-  print(pars$regression.class)
   
   ############################
   #
