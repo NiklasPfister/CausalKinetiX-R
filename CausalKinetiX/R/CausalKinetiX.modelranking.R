@@ -433,7 +433,6 @@ CausalKinetiX.modelranking <- function(D,
     else{
       model.index <- match(modelstot[[model]], ordering)
     }
-    ## }
     
     ## collect predictors X
     Xlist <- vector("list", n)
