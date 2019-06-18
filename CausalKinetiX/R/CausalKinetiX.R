@@ -98,7 +98,7 @@ CausalKinetiX <- function(D,
     pars$include.vars <- NA
   }
   if(!exists("maineffect.models", pars)){
-    pars$maineffect.models <- TRUE
+    pars$maineffect.models <- FALSE
   }
   if(!exists("rm.target",pars)){
     pars$rm.target <- FALSE
@@ -124,6 +124,9 @@ CausalKinetiX <- function(D,
     # set signed to TRUE if regression class is signed.OLS
     if(pars$regression.class == "signed.OLS"){
       signed <- TRUE
+    }
+    else{
+      signed <- FALSE
     }
   }
   else{
