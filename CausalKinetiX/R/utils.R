@@ -81,10 +81,9 @@ ode_integratedlasso_rank_vars <- function(D,
     }
     first.entrance <- apply(sel.matrix, 1, which.max)
     # find all rows without ones and set first entrance to Inf
-    first.entrance[which(apply(sel.matrix, 1, sum) == 0)] <- Inf
-    inf_ind <- which(apply(sel.matrix, 1, sum) == 0)
-    first.entrance[inf_ind] <- max_lasso+5-abs(cor(deltaY, Xint))[inf_ind]
-    max_lasso <- max(first.entrance[!inf_ind])
+    inf_ind <- apply(sel.matrix, 1, sum) == 0
+    last_entrance <- max(first.entrance[!inf_ind])
+    first.entrance[inf_ind] <- last_entrance + 1 - abs(cor(deltaY, Xint))[inf_ind]
     ranking <- order(first.entrance)
     if(!is.na(pars$lasso.set.size)){
       tmp <- as.numeric(apply(sel.matrix, 2, sum))
@@ -113,46 +112,41 @@ ode_integratedlasso_rank_vars <- function(D,
 
 
 construct_models <- function(D, L, d, n, target, times,
-                             maineffects.models, screening,
+                             maineffect.models, screening,
                              interactions, products, include.vars,
                              max_preds, expsize, env=NULL, signed=FALSE){
 
-  ## Main-Effect and Full-Effect models depends on maineffects.models
-  if(!maineffects.models){
-    # construct variable vector
-    if(!is.na(include.vars)[1]){
-      vv <- (1:d)[-include.vars[include.vars!=0]]
+  # construct variable vector
+  if(!is.na(include.vars)[1]){
+    vv <- (1:d)[-include.vars[include.vars!=0]]
+  }
+  else{
+    vv <- 1:d
+  }
+  ## Decide which terms to keep depending on screening, interactions and products
+  if(is.numeric(screening)){
+    if(maineffect.models){
+      tmp <- extend_Dmat(D, L, d, n, FALSE, FALSE, include.vars)
     }
     else{
-      vv <- 1:d
-    }
-    ## Decide which terms to keep depending on screening, interactions and products
-    if(is.numeric(screening)){
       tmp <- extend_Dmat(D, L, d, n, products, interactions, include.vars)
-      Dfull <- tmp$Dnew
-      ordering <- tmp$ordering
-      res <- ode_integratedlasso_rank_vars(Dfull,
-                                           times,
-                                           env=env,
-                                           target, list(interactions=FALSE,
-                                                        rm.target=FALSE,
-                                                        lasso.set.size=NA,
-                                                        signed=FALSE))$ranking
-      if(signed){
-        sign_index <- sapply(ordering, function(x) x[1] == target)
-        ordered_sign <- sign_index[res]
-        min_terms <- apply(cbind(cumsum(ordered_sign), cumsum(!ordered_sign)), 1, min)
-        index <- which.min(min_terms<ceiling(screening/2))
-        keep_terms <- c(ordering[res[1:index]][ordered_sign[1:index]][1:ceiling(screening/2)],
-                        ordering[res[1:index]][!ordered_sign[1:index]][1:ceiling(screening/2)])
-      }
-      else{
-        keep_terms <- ordering[res[1:screening]]
-      }
-      num_terms <- screening
     }
-    else{
-      keep_terms <- as.list(vv)
+    Dfull <- tmp$Dnew
+    ordering <- tmp$ordering
+    screening <- min(c(screening, length(ordering)))
+    res <- ode_integratedlasso_rank_vars(Dfull,
+                                         times,
+                                         env=env,
+                                         target, list(interactions=FALSE,
+                                                      rm.target=FALSE,
+                                                      lasso.set.size=NA,
+                                                      signed=FALSE))$ranking
+    keep_terms <- ordering[res[1:screening]]
+    num_terms <- screening
+  }
+  else{
+    keep_terms <- as.list(vv)
+    if(!maineffect.models){
       # add interactions
       if(interactions){
         keep_terms <- append(keep_terms, combn(vv, 2, simplify=FALSE))
@@ -161,66 +155,71 @@ construct_models <- function(D, L, d, n, target, times,
       if(products){
         keep_terms <- append(keep_terms, lapply(vv, function(i) c(i,i)))
       }
-      # include.vars
-      if(!is.na(include.vars)[1]){
-        keep_terms.new <- list()
-        for(i in 1:length(keep_terms)){
-          for(var in include.vars){
-            if(var == 0){
-              keep_terms.new <- append(keep_terms.new, keep_terms[[i]])
-            }
-            else{
-              tmp_term <- sort(c(var, keep_terms[[i]]))
-              keep_terms.new <- append(keep_terms.new, list(tmp_term))
-            }
+    }
+    # include.vars
+    if(!is.na(include.vars)[1]){
+      keep_terms.new <- list()
+      for(i in 1:length(keep_terms)){
+        for(var in include.vars){
+          if(var == 0){
+            keep_terms.new <- append(keep_terms.new, keep_terms[[i]])
+          }
+          else{
+            tmp_term <- sort(c(var, keep_terms[[i]]))
+            keep_terms.new <- append(keep_terms.new, list(tmp_term))
           }
         }
-        keep_terms <- append(keep_terms.new, as.list(include.vars))
       }
-      num_terms <- length(keep_terms)
+      keep_terms <- append(keep_terms.new, as.list(include.vars))
     }
-    ## Construct models
-    if(max_preds){
-      models <- list(list())
-      for(k in 1:(expsize+1)){
-        models <- append(models, lapply(combn(keep_terms, k, simplify=FALSE), as.list))
-      }
-    }
-    else{
-      models <- lapply(combn(keep_terms, expsize+1, simplify=FALSE), as.list)
+    num_terms <- length(keep_terms)
+  }
+  ## Construct models
+  if(max_preds){
+    models <- list(list())
+    for(k in 1:(expsize+1)){
+      models <- append(models, lapply(combn(keep_terms, k, simplify=FALSE), as.list))
     }
   }
   else{
-    if(!is.na(include.vars[1])){
-      warning("include.vars is not defined for maineffects.models==TRUE")
-    }
-    if(!is.na(screening)){
-      warning("screening is not implemented for maineffects.models==TRUE")
-    }
-    ## Construct models
-    if(max_preds){
-      models <- list(list())
-      for(k in 1:(expsize+1)){
-        models <- append(models, lapply(combn(as.list(1:d), k, simplify=FALSE), as.list))
+    models <- lapply(combn(keep_terms, expsize+1, simplify=FALSE), as.list)
+  }
+  if(maineffect.models){
+    # add interactions and products
+    if(!is.na(include.vars)[1]){
+      for(i in 1:length(models)){
+        if(length(models[[i]])>1){
+          mod_vars <- setdiff(unlist(models[[i]]), include.vars)
+          for(k in 1:length(include.vars)){
+            if(interactions){
+              models[[i]] <- c(models[[i]],
+                               lapply(combn(mod_vars, 2, simplify=FALSE),
+                                      function(x) sort(c(x, include.vars[k]))))
+            }
+            if(products){
+              models[[i]] <- c(models[[i]],
+                               lapply(lapply(mod_vars,
+                                             function(i) c(i, i)),
+                                      function(x) sort(c(x, include.vars[k]))))
+            }
+          }
+        }
       }
     }
     else{
-      models <- lapply(combn(as.list(1:d), expsize+1, simplify=FALSE), as.list)
-    }
-    # add interactions and products
-    for(i in 1:length(models)){
-      if(length(models[[i]])>1){
-        if(interactions){
-          models[[i]] <- c(models[[i]],
-                           lapply(combn(unlist(models[[i]]), 2, simplify=FALSE), c))
-        }
-        if(products){
-          models[[i]] <- c(models[[i]],
-                           lapply(lapply(unique(unlist(models[[i]])), function(i) c(i, i)), c))
+      for(i in 1:length(models)){
+        if(length(models[[i]])>1){
+          if(interactions){
+            models[[i]] <- c(models[[i]],
+                             lapply(combn(sort(unlist(models[[i]])), 2, simplify=FALSE), c))
+          }
+          if(products){
+            models[[i]] <- c(models[[i]],
+                             lapply(lapply(unique(unlist(models[[i]])), function(i) c(i, i)), c))
+          }
         }
       }
     }
-    num_terms <- d  
   }
     
   # return output
