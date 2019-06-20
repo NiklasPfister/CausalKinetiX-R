@@ -2,7 +2,7 @@
 # Small helper functions that are not exported
 ###
 
-##' @import utils glmnet nnlasso
+##' @import utils glmnet
 
 ## Lasso based on deltaY vs intX
 ode_integratedlasso_rank_vars <- function(D,
@@ -19,9 +19,6 @@ ode_integratedlasso_rank_vars <- function(D,
   }
   if(!exists("rm.target",pars)){
     pars$rm.target <- TRUE
-  }
-  if(!exists("signed",pars)){
-    pars$signed <- FALSE
   }
   if(!exists("lasso.set.size",pars)){
     pars$lasso.set.size <- NA
@@ -56,14 +53,8 @@ ode_integratedlasso_rank_vars <- function(D,
     for(i in (d+1):length(var.names)){
       Xint.interactions[,i] <- Xint[,var.names[[i]][1]] * Xint[,var.names[[i]][2]]
     }
-    if(pars$signed){
-      fit <- nnlasso(Xint.interactions, deltaY, family="normal", path=TRUE, min.lambda = 1e-15)
-      sel.matrix <- (t(fit$coef) > max(fit$coef[1,]))
-    }
-    else{
-      fit <- glmnet(Xint.interactions, deltaY)
-      sel.matrix <- (fit$beta != 0)
-    }
+    fit <- glmnet(Xint.interactions, deltaY)
+    sel.matrix <- (fit$beta != 0)
     first.entrance <- apply(sel.matrix, MARGIN = 1, FUN = which.max)
     # find all rows without ones and set first entrance to Inf
     first.entrance[which(apply(sel.matrix, MARGIN = 1, FUN = sum) == 0)] <- Inf
@@ -71,14 +62,8 @@ ode_integratedlasso_rank_vars <- function(D,
     ranking <- unique(unlist(var.names[ranking]))
   }
   else{
-    if(pars$signed){
-      fit <- nnlasso(Xint, deltaY, family="normal", path=TRUE, min.lambda = 1e-15)
-      sel.matrix <- (t(fit$coef) > max(fit$coef[1,]))
-    }
-    else{
-      fit <- glmnet(Xint, deltaY)
-      sel.matrix <- (fit$beta != 0)
-    }
+    fit <- glmnet(Xint, deltaY)
+    sel.matrix <- (fit$beta != 0)
     first.entrance <- apply(sel.matrix, 1, which.max)
     # find all rows without ones and set first entrance to Inf
     inf_ind <- apply(sel.matrix, 1, sum) == 0
@@ -139,8 +124,7 @@ construct_models <- function(D, L, d, n, target, times,
                                          env=env,
                                          target, list(interactions=FALSE,
                                                       rm.target=FALSE,
-                                                      lasso.set.size=NA,
-                                                      signed=FALSE))$ranking
+                                                      lasso.set.size=NA))$ranking
     keep_terms <- ordering[res[1:screening]]
     num_terms <- screening
   }
