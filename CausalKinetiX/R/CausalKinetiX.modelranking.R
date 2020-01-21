@@ -123,7 +123,12 @@ CausalKinetiX.modelranking <- function(D,
     pars$regression.class <- "OLS"
   }
   if(!exists("sample.splitting",pars)){
-    pars$sample.splitting <- "loo"
+    if(sum(length(unique(env))) == 1){
+      pars$sample.splitting <- "none"
+    }
+    else{
+      pars$sample.splitting <- "loo"
+    }
   }
   if(!exists("score.type",pars)){
     pars$score.type <- "mean_absolute"
@@ -150,6 +155,13 @@ CausalKinetiX.modelranking <- function(D,
   ## Parameter consistency checks
   if(pars$smooth.Y & !is.na(pars$splitting.env)){
     stop("If smooth.Y is TRUE, splitting.env needs to be NA.")
+  }
+  if(pars$sample.splitting != "none" & length(unique(env)) == 1){
+    warning(paste("pars$sample.splitting == ", pars$sample.splitting,
+                  " does not make sense since only one environment",
+                  " has been given. It has been set to 'none'.",
+                  sep=""))
+    pars$sample.splitting <- "none"
   }
   
   ############################
