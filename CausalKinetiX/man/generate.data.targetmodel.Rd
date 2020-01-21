@@ -4,8 +4,13 @@
 \alias{generate.data.targetmodel}
 \title{Target model based on predictor trajectories}
 \usage{
-generate.data.targetmodel(env = rep(1, 10), noise.sd = 0.01, L = 15,
-  d = 7, seed = NA)
+generate.data.targetmodel(
+  env = rep(1, 10),
+  noise.sd = 0.01,
+  L = 15,
+  d = 7,
+  seed = NA
+)
 }
 \arguments{
 \item{env}{integer vector of length n encoding to which experiment

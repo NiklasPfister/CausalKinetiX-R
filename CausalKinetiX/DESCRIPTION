@@ -1,6 +1,6 @@
 Package: CausalKinetiX
 Title: Learning Stable Structures in Kinetic Systems
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: c(
     person(given = "Niklas",
            family = "Pfister",
@@ -18,5 +18,5 @@ Description: Implementation of 'CausalKinetiX', a framework for learning stable 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Imports: fda, cvTools, quadprog, randomForest, deSolve, stats, graphics, pspline, utils, glmnet, sundialr (>= 0.1.3)

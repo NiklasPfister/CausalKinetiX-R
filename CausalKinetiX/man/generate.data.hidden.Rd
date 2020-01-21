@@ -4,11 +4,17 @@
 \alias{generate.data.hidden}
 \title{Hidden variable model}
 \usage{
-generate.data.hidden(env = rep(1, 10), L = 15,
-  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, relativ =
-  FALSE), intervention = "initial_blockreactions",
-  intervention.par = 0.1, hidden = TRUE, ode.solver = "lsoda",
-  seed = NA, silent = FALSE)
+generate.data.hidden(
+  env = rep(1, 10),
+  L = 15,
+  par.noise = list(noise.sd = 0.01, only.target.noise = TRUE, relativ = FALSE),
+  intervention = "initial_blockreactions",
+  intervention.par = 0.1,
+  hidden = TRUE,
+  ode.solver = "lsoda",
+  seed = NA,
+  silent = FALSE
+)
 }
 \arguments{
 \item{env}{integer vector of length n encoding to which experiment

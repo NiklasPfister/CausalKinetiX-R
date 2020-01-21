@@ -4,9 +4,18 @@
 \alias{ode.solver}
 \title{ode.solver}
 \usage{
-ode.solver(time_vec, initial_value, times, X, model, target, coefs,
-  smooth.type = "smoothing.spline", reltol = 10^(-10),
-  abstol = 10^(-16))
+ode.solver(
+  time_vec,
+  initial_value,
+  times,
+  X,
+  model,
+  target,
+  coefs,
+  smooth.type = "smoothing.spline",
+  reltol = 10^(-10),
+  abstol = 10^(-16)
+)
 }
 \arguments{
 \item{time_vec}{numeric vector. Specifices the points at which to

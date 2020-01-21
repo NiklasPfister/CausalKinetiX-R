@@ -4,9 +4,17 @@
 \alias{constrained.smoothspline}
 \title{constrained.smoothspline}
 \usage{
-constrained.smoothspline(y, times, pen.degree, constraint = "fixed",
-  derivative.values = NA, initial.value = NA, times.new,
-  num.folds = "leave-one-out", lambda = "optim")
+constrained.smoothspline(
+  y,
+  times,
+  pen.degree,
+  constraint = "fixed",
+  derivative.values = NA,
+  initial.value = NA,
+  times.new,
+  num.folds = "leave-one-out",
+  lambda = "optim"
+)
 }
 \arguments{
 \item{y}{a vector of response variables.}
