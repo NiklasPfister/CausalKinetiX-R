@@ -304,7 +304,7 @@ CausalKinetiX.modelranking <- function(D,
     RSS3_A <- vector("numeric", num_env)
     lambda <- vector("numeric", num_env)
     initial_values <- vector("numeric", num_env)
-    times_new <- 0
+    times_new <- min(times)
     if(!silent | show.plot){
       Ya <- vector("list", num_env)
       Yb <- vector("list", num_env)
@@ -358,7 +358,7 @@ CausalKinetiX.modelranking <- function(D,
     RSS3_A <- vector("numeric", n)
     lambda <- vector("numeric", n)
     initial_values <- vector("numeric", n)
-    times_new <- 0
+    times_new <- min(times)
     if(!silent | show.plot){
       Ya <- vector("list", n)
       Yb <- vector("list", n)
